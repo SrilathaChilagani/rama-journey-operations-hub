@@ -28,3 +28,7 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project rules
+- SOP business rules (tiers, assignment gate, supervision cycles, complaint deadlines) live in src/lib/care-rules.ts with tests beside it; keep UI logic calling these. Why: one source of truth for the SOP.
+- Data is stored in browser localStorage via src/lib/store.ts because Lovable Cloud could not be enabled (no credits); migrate to Cloud tables when available. Why: shared, persistent data needs a backend.
