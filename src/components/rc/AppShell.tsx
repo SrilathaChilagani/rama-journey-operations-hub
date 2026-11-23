@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { resetDemo } from "@/lib/store";
 
 const NAV = [
-  { to: "/", label: "Overview" },
+  { to: "/console", label: "Overview" },
   { to: "/patients", label: "Patients" },
   { to: "/caregivers", label: "Caregivers" },
   { to: "/shifts", label: "Daily care log" },
@@ -14,7 +14,7 @@ export function AppShell({ title, subtitle, children }: { title: string; subtitl
   return (
     <div className="min-h-screen bg-background md:grid md:grid-cols-[240px_1fr]">
       <aside className="border-b border-border bg-sidebar p-5 md:min-h-screen md:border-b-0 md:border-r">
-        <Link to="/" className="block font-display text-2xl text-primary">Rama Cares</Link>
+        <Link to="/console" className="block font-display text-2xl text-primary">Rama Cares</Link>
         <p className="mt-1 text-xs text-muted-foreground">Clinically supervised home care</p>
         <nav className="mt-6 flex flex-wrap gap-1 md:flex-col">
           {NAV.map((n) => (

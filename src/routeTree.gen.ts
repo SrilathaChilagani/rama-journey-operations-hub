@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CaregiversRouteImport } from './routes/caregivers'
+import { Route as ConsoleRouteImport } from './routes/console'
 import { Route as IncidentsRouteImport } from './routes/incidents'
 import { Route as PatientsRouteImport } from './routes/patients'
 import { Route as ShiftsRouteImport } from './routes/shifts'
@@ -23,6 +24,11 @@ const IndexRoute = IndexRouteImport.update({
 const CaregiversRoute = CaregiversRouteImport.update({
   id: '/caregivers',
   path: '/caregivers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConsoleRoute = ConsoleRouteImport.update({
+  id: '/console',
+  path: '/console',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IncidentsRoute = IncidentsRouteImport.update({
@@ -44,6 +50,7 @@ const ShiftsRoute = ShiftsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/caregivers': typeof CaregiversRoute
+  '/console': typeof ConsoleRoute
   '/incidents': typeof IncidentsRoute
   '/patients': typeof PatientsRoute
   '/shifts': typeof ShiftsRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/caregivers': typeof CaregiversRoute
+  '/console': typeof ConsoleRoute
   '/incidents': typeof IncidentsRoute
   '/patients': typeof PatientsRoute
   '/shifts': typeof ShiftsRoute
@@ -59,21 +67,31 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/caregivers': typeof CaregiversRoute
+  '/console': typeof ConsoleRoute
   '/incidents': typeof IncidentsRoute
   '/patients': typeof PatientsRoute
   '/shifts': typeof ShiftsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/caregivers' | '/incidents' | '/patients' | '/shifts'
+  fullPaths:
+    '/' | '/caregivers' | '/console' | '/incidents' | '/patients' | '/shifts'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/caregivers' | '/incidents' | '/patients' | '/shifts'
-  id: '__root__' | '/' | '/caregivers' | '/incidents' | '/patients' | '/shifts'
+  to: '/' | '/caregivers' | '/console' | '/incidents' | '/patients' | '/shifts'
+  id:
+    | '__root__'
+    | '/'
+    | '/caregivers'
+    | '/console'
+    | '/incidents'
+    | '/patients'
+    | '/shifts'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CaregiversRoute: typeof CaregiversRoute
+  ConsoleRoute: typeof ConsoleRoute
   IncidentsRoute: typeof IncidentsRoute
   PatientsRoute: typeof PatientsRoute
   ShiftsRoute: typeof ShiftsRoute
@@ -93,6 +111,13 @@ declare module '@tanstack/react-router' {
       path: '/caregivers'
       fullPath: '/caregivers'
       preLoaderRoute: typeof CaregiversRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/console': {
+      id: '/console'
+      path: '/console'
+      fullPath: '/console'
+      preLoaderRoute: typeof ConsoleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/incidents': {
@@ -122,6 +147,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CaregiversRoute: CaregiversRoute,
+  ConsoleRoute: ConsoleRoute,
   IncidentsRoute: IncidentsRoute,
   PatientsRoute: PatientsRoute,
   ShiftsRoute: ShiftsRoute,
