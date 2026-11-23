@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import hero from "@/assets/home-care-nurse.jpg";
 import { TIERS, type Tier } from "@/lib/care-rules";
+import { SERVICES } from "@/lib/services";
 import { type Patient, uid, update } from "@/lib/store";
 
 export const Route = createFileRoute("/")({
@@ -18,12 +19,6 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const SERVICES = [
-  { n: "01", t: "After a hospital stay", d: "Recovery at home after surgery, stroke, cardiac events, fractures or ICU — per shift or as a 7, 15 or 30-day recovery package." },
-  { n: "02", t: "Elderly care", d: "Daily living support, companionship, medication reminders, dementia and palliative care, on a monthly plan." },
-  { n: "03", t: "Rehabilitation", d: "Physiotherapy, occupational and speech therapy by visiting therapists, in the comfort of home." },
-  { n: "04", t: "Equipment & supplies", d: "Hospital beds, air mattresses, wheelchairs, oxygen concentrators and monitors — to rent or buy." },
-];
 const PROMISES = [
   ["Assessment within 24 hours", "A registered nurse visits before anyone is sent."],
   ["A written care plan", "Goals, routine, red flags — signed by you."],
@@ -73,11 +68,22 @@ function Home() {
           <h2 className="max-w-2xl font-display text-4xl md:text-5xl">Four ways we care.</h2>
           <div className="mt-14 grid gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-2">
             {SERVICES.map((s) => (
-              <div key={s.n} className="bg-card p-10">
+              <Link
+                key={s.slug}
+                to="/services/$slug"
+                params={{ slug: s.slug }}
+                className="group bg-card p-10 transition-colors hover:bg-secondary"
+              >
                 <span className="font-display text-accent">{s.n}</span>
-                <h3 className="mt-4 font-display text-2xl">{s.t}</h3>
-                <p className="mt-3 text-muted-foreground">{s.d}</p>
-              </div>
+                <h3 className="mt-4 font-display text-2xl">{s.name}</h3>
+                <p className="mt-3 text-muted-foreground">{s.short}</p>
+                <span className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary">
+                  Read the full detail
+                  <span aria-hidden className="transition-transform group-hover:translate-x-1">
+                    →
+                  </span>
+                </span>
+              </Link>
             ))}
           </div>
         </div>
