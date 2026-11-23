@@ -32,6 +32,3 @@ use the editor.
 ## Project rules
 - SOP business rules (tiers, assignment gate, supervision cycles, complaint deadlines) live in src/lib/care-rules.ts with tests beside it; keep UI logic calling these. Why: one source of truth for the SOP.
 - Data is stored in browser localStorage via src/lib/store.ts because Lovable Cloud could not be enabled (no credits); migrate to Cloud tables when available. Why: shared, persistent data needs a backend.
-- Public Find care map uses Leaflet + OpenStreetMap tiles, lazy-loaded behind ClientOnly (src/components/rc/CareMap.tsx). Why: keyless, works without a connector, and Leaflet can't run during SSR.
-- Area/PIN lookup, distances and visit slots live in src/lib/areas.ts with tests. Why: keep search rules out of UI.
-- Public bookings create a step-1 enquiry with a preferred caregiver and visit time, never an assignment. Why: SOP forbids assigning before nurse assessment.

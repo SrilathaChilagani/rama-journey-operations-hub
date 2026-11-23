@@ -44,9 +44,8 @@ function Home() {
             <a href="#services" className="hover:text-primary">Services</a>
             <a href="#promise" className="hover:text-primary">Our promise</a>
             <a href="#how" className="hover:text-primary">How it works</a>
-            <Link to="/find-care" className="hover:text-primary">Find a caregiver</Link>
           </nav>
-          <Link to="/find-care" className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90">Book a visit</Link>
+          <a href="#enquire" className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90">Book an assessment</a>
         </div>
       </header>
 
@@ -57,7 +56,7 @@ function Home() {
           <p className="mt-6 max-w-lg text-lg text-muted-foreground">For families who can't always be there. Trained caregivers and nurses at home — assessed, supervised and reported to you every day.</p>
           <div className="mt-10 flex flex-wrap gap-4">
             <a href="#enquire" className="rounded-full bg-primary px-7 py-3.5 font-medium text-primary-foreground hover:bg-primary/90">Request a nurse assessment</a>
-            <Link to="/find-care" className="rounded-full border border-foreground/20 px-7 py-3.5 font-medium hover:border-primary hover:text-primary">Find care near you</Link>
+            <a href="#how" className="rounded-full border border-foreground/20 px-7 py-3.5 font-medium hover:border-primary hover:text-primary">How it works</a>
           </div>
         </div>
         <div className="relative">

@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CaregiversRouteImport } from './routes/caregivers'
 import { Route as ConsoleRouteImport } from './routes/console'
-import { Route as FindCareRouteImport } from './routes/find-care'
 import { Route as IncidentsRouteImport } from './routes/incidents'
 import { Route as PatientsRouteImport } from './routes/patients'
 import { Route as ShiftsRouteImport } from './routes/shifts'
@@ -30,11 +29,6 @@ const CaregiversRoute = CaregiversRouteImport.update({
 const ConsoleRoute = ConsoleRouteImport.update({
   id: '/console',
   path: '/console',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FindCareRoute = FindCareRouteImport.update({
-  id: '/find-care',
-  path: '/find-care',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IncidentsRoute = IncidentsRouteImport.update({
@@ -57,7 +51,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/caregivers': typeof CaregiversRoute
   '/console': typeof ConsoleRoute
-  '/find-care': typeof FindCareRoute
   '/incidents': typeof IncidentsRoute
   '/patients': typeof PatientsRoute
   '/shifts': typeof ShiftsRoute
@@ -66,7 +59,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/caregivers': typeof CaregiversRoute
   '/console': typeof ConsoleRoute
-  '/find-care': typeof FindCareRoute
   '/incidents': typeof IncidentsRoute
   '/patients': typeof PatientsRoute
   '/shifts': typeof ShiftsRoute
@@ -76,7 +68,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/caregivers': typeof CaregiversRoute
   '/console': typeof ConsoleRoute
-  '/find-care': typeof FindCareRoute
   '/incidents': typeof IncidentsRoute
   '/patients': typeof PatientsRoute
   '/shifts': typeof ShiftsRoute
@@ -84,28 +75,14 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
-    | '/caregivers'
-    | '/console'
-    | '/find-care'
-    | '/incidents'
-    | '/patients'
-    | '/shifts'
+    '/' | '/caregivers' | '/console' | '/incidents' | '/patients' | '/shifts'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/caregivers'
-    | '/console'
-    | '/find-care'
-    | '/incidents'
-    | '/patients'
-    | '/shifts'
+  to: '/' | '/caregivers' | '/console' | '/incidents' | '/patients' | '/shifts'
   id:
     | '__root__'
     | '/'
     | '/caregivers'
     | '/console'
-    | '/find-care'
     | '/incidents'
     | '/patients'
     | '/shifts'
@@ -115,7 +92,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CaregiversRoute: typeof CaregiversRoute
   ConsoleRoute: typeof ConsoleRoute
-  FindCareRoute: typeof FindCareRoute
   IncidentsRoute: typeof IncidentsRoute
   PatientsRoute: typeof PatientsRoute
   ShiftsRoute: typeof ShiftsRoute
@@ -142,13 +118,6 @@ declare module '@tanstack/react-router' {
       path: '/console'
       fullPath: '/console'
       preLoaderRoute: typeof ConsoleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/find-care': {
-      id: '/find-care'
-      path: '/find-care'
-      fullPath: '/find-care'
-      preLoaderRoute: typeof FindCareRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/incidents': {
@@ -179,7 +148,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CaregiversRoute: CaregiversRoute,
   ConsoleRoute: ConsoleRoute,
-  FindCareRoute: FindCareRoute,
   IncidentsRoute: IncidentsRoute,
   PatientsRoute: PatientsRoute,
   ShiftsRoute: ShiftsRoute,
