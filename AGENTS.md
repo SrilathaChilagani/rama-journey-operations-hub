@@ -32,3 +32,4 @@ use the editor.
 ## Project rules
 - SOP business rules (tiers, assignment gate, supervision cycles, complaint deadlines) live in src/lib/care-rules.ts with tests beside it; keep UI logic calling these. Why: one source of truth for the SOP.
 - Data is stored in browser localStorage via src/lib/store.ts because Lovable Cloud could not be enabled (no credits); migrate to Cloud tables when available. Why: shared, persistent data needs a backend.
+- Scope patient-home styling tokens to its wrapper and keep media in asset pointers; this allows homepage refreshes without changing staff-console styling.
