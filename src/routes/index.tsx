@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowDown, ArrowRight, CheckCircle2, Heart, HeartHandshake, MapPin, Menu, MessageCircle, ShieldCheck, Stethoscope, Activity, Package, X } from "lucide-react";
-import heroAsset from "@/assets/rama-home-modern.jpg.asset.json";
+import { getWeeklyPhoto, HOME_PHOTOS } from "@/lib/home-photos";
 import { Button } from "@/components/ui/button";
 import { TIERS, type Tier } from "@/lib/care-rules";
 import { SERVICES } from "@/lib/services";
@@ -33,6 +33,17 @@ const NAV = [["Services", "#services"], ["Our promise", "#promise"], ["How it wo
 
 function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [heroPhoto, setHeroPhoto] = useState<(typeof HOME_PHOTOS)[number]>(HOME_PHOTOS[0]);
+  useEffect(() => {
+    const refreshPhoto = () => setHeroPhoto(getWeeklyPhoto(new Date()));
+    refreshPhoto();
+    const timer = window.setInterval(refreshPhoto, 60_000);
+    window.addEventListener("focus", refreshPhoto);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refreshPhoto);
+    };
+  }, []);
   return (
     <div className="patient-home bg-background text-foreground">
       <header className="relative z-20 border-b border-border bg-background">
@@ -54,7 +65,7 @@ function Home() {
 
       <main>
         <section className="home-hero relative overflow-hidden bg-home-surface">
-          <img src={heroAsset.url} alt="A nurse gently holding an elderly woman's hand in a bright Hyderabad home" width={1672} height={941} fetchPriority="high" className="home-hero-image absolute inset-0 h-full w-full object-cover" />
+          <img src={heroPhoto.src} alt={heroPhoto.alt} width={1672} height={941} fetchPriority="high" className="home-hero-image absolute inset-0 h-full w-full object-cover" />
           <div className="home-container relative z-10 flex h-full items-center">
             <div className="home-hero-copy max-w-[470px] py-12">
               <p className="mb-5 inline-flex items-center gap-2 text-[11px] font-semibold uppercase text-primary"><span className="size-1.5 rounded-full bg-primary" /> Nurse-led home care in Hyderabad</p>
