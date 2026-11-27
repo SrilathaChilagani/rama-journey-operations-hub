@@ -46,7 +46,6 @@ Last updated: 2026-11-27 — Claude Code (enquiries + staff logins on Neon; tele
   (deleted after), live sign-in queries the DB, photos load.
 
 ## 🐞 Known Issues / Limitations
-- No staff login exists yet — owner must run `bun run staff:create …` before using the console.
 - No alert when an enquiry arrives (staff must check `/enquiries`).
 - WhatsApp number in `site-config.ts` empty → WhatsApp button hidden.
 - No rate limit on the public form beyond the honeypot.
@@ -77,4 +76,5 @@ Last updated: 2026-11-27 — Claude Code (enquiries + staff logins on Neon; tele
 | 2026-11-26 | Leave Lovable entirely: host on Vercel (not Lovable), own Postgres/Sentry/etc., no Lovable association long-term | In progress — decisions made (ADR-007); Vercel live; photos fixed (`e6da88e`); next: push, DB schema, staff auth | ADR-007, `e6da88e` |
 | 2026-11-27 | Log in to Vercel, link project, find why production deployment missing | Done — deployed clean `main`; photos fixed | `e6da88e` |
 | 2026-11-27 | Remove Rama Cares references from telemed-in; keep the two fully separate | Done — none existed in telemed-in; Rama `.env.local` trimmed of telemed values | `.env.local` (local only) |
-| 2026-11-27 | Rebuild enquiries + console protection on the new Neon DB (no Web3Forms/passcode) | Done — pushed `ca03234`, live-verified on Vercel; awaiting owner staff login | ADR-008, `db/`, `src/server/`, `src/lib/api/` |
+| 2026-11-27 | Rebuild enquiries + console protection on the new Neon DB (no Web3Forms/passcode) | Done — pushed `ca03234`, live-verified on Vercel | ADR-008, `db/`, `src/server/`, `src/lib/api/` |
+| 2026-11-27 | Create owner's console login using the password in `.env.local` | Done — admin login created, verified on live site | DB only |
