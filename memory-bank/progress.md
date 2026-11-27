@@ -85,3 +85,4 @@ Last updated: 2026-11-27 — Claude Code (enquiries + staff logins on Neon; tele
 | 2026-11-27 | Rebuild enquiries + console protection on the new Neon DB (no Web3Forms/passcode) | Done — pushed `ca03234`, live-verified on Vercel | ADR-008, `db/`, `src/server/`, `src/lib/api/` |
 | 2026-11-27 | Create owner's console login using the password in `.env.local` | Done — admin login created, verified on live site | DB only |
 | 2026-11-27 | Staff login: password + SMS code (Twilio Verify, Rama Cares subaccount) with code autofill | Done — code live; awaiting owner's Twilio subaccount keys + phone | ADR-009, `db/migrations/002…`, `src/server/twilio.ts` |
+| 2026-11-27 | Add Twilio variable placeholders to `.env.local`; always add placeholders for new keys | Done — owner fills values | `.env.local` (local only) |

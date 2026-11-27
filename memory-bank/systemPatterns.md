@@ -67,3 +67,5 @@ typecheck `npx tsc --noEmit`.
 ## Security posture (current)
 - No auth, no backend, no server-side data. Console is public and demo-only.
 - Never store real patient data (names, phones, health info) in seed data or the memory bank.
+- **Env convention:** new keys get empty `NAME=` placeholders in `.env.local` (comment on its own
+  line above, never trailing); the owner pastes values, then they're copied to Vercel env.
