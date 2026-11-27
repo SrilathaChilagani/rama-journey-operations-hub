@@ -32,7 +32,7 @@ Last updated: 2026-11-27 — Claude Code (enquiries + staff logins on Neon; tele
   = new Neon DB `ep-calm-darkness…`, `NITRO_PRESET=vercel`). First production deploy of `main`
   READY at https://rama-journey-operations-hub.vercel.app (/, /console, /services/* = 200).
 - Homepage photos downloaded from Lovable storage (sizes verified) into `src/assets/*.jpg`;
-  asset pointers removed (`e6da88e`, not yet pushed).
+  asset pointers removed (`e6da88e`).
 - telemed-in audited: no Rama Cares code, tables or schema — nothing to remove. Rama
   `.env.local` trimmed from a full telemed-in copy to Rama-only keys (59 identical telemed values
   removed; comment that broke `DATABASE_URL` removed). Vercel `DATABASE_URL` re-set clean
@@ -42,6 +42,8 @@ Last updated: 2026-11-27 — Claude Code (enquiries + staff logins on Neon; tele
   `staff-gate.ts` deleted. `db/migrations/001_…sql` applied to Rama DB. Scripts `db:migrate`,
   `staff:create`. 14 tests pass; browser end-to-end test passed (form → DB → sign-in → list →
   status → sign-out; server refuses data without session). Test data deleted.
+- Pushed `e6da88e` + `ca03234`; Vercel auto-deployed. Live check: form saved a row in Neon
+  (deleted after), live sign-in queries the DB, photos load.
 
 ## 🐞 Known Issues / Limitations
 - No staff login exists yet — owner must run `bun run staff:create …` before using the console.
@@ -52,7 +54,6 @@ Last updated: 2026-11-27 — Claude Code (enquiries + staff logins on Neon; tele
 - Console patients/caregivers/shifts/incidents still per-browser localStorage.
 - Owner's shell profile sets a stale `VERCEL_TOKEN` that overrides `vercel login`; run the CLI
   as `env -u VERCEL_TOKEN vercel …` (or remove it from the profile).
-- First Vercel deploy (before `e6da88e`) shows broken homepage photos until pushed.
 
 ## 📋 Next Up (open items from README)
 1. **Console data → Neon** — patients, caregivers, shifts, incidents, complaints behind `requireStaff()`.
@@ -76,4 +77,4 @@ Last updated: 2026-11-27 — Claude Code (enquiries + staff logins on Neon; tele
 | 2026-11-26 | Leave Lovable entirely: host on Vercel (not Lovable), own Postgres/Sentry/etc., no Lovable association long-term | In progress — decisions made (ADR-007); Vercel live; photos fixed (`e6da88e`); next: push, DB schema, staff auth | ADR-007, `e6da88e` |
 | 2026-11-27 | Log in to Vercel, link project, find why production deployment missing | Done — deployed clean `main`; photos fixed | `e6da88e` |
 | 2026-11-27 | Remove Rama Cares references from telemed-in; keep the two fully separate | Done — none existed in telemed-in; Rama `.env.local` trimmed of telemed values | `.env.local` (local only) |
-| 2026-11-27 | Rebuild enquiries + console protection on the new Neon DB (no Web3Forms/passcode) | Done — awaiting push + owner staff login | ADR-008, `db/`, `src/server/`, `src/lib/api/` |
+| 2026-11-27 | Rebuild enquiries + console protection on the new Neon DB (no Web3Forms/passcode) | Done — pushed `ca03234`, live-verified on Vercel; awaiting owner staff login | ADR-008, `db/`, `src/server/`, `src/lib/api/` |
