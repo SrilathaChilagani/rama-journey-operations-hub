@@ -8,9 +8,10 @@
   are built and tested locally. Pushed (`ca03234`) and live-verified on Vercel; `DATABASE_URL` re-set clean.
   telemed-in fully separate (nothing of Rama's was in it).
 - Owner admin login created (password = `ADMIN_PORTAL_DEFAULT_PASSWORD` in `.env.local`).
-- SMS sign-in code built (ADR-009). Waiting on owner: Twilio **subaccount** "Rama Cares" +
-  Verify service → `TWILIO_ACCOUNT_SID/AUTH_TOKEN/VERIFY_SERVICE_SID` in `.env.local`, plus their
-  mobile. Then: add to Vercel env, `bun run staff:phone <owner email> <+91…>`, live test.
+- SMS sign-in code built (ADR-009). Twilio keys in `.env.local` + Vercel (subaccount renamed
+  "Rama Cares", Trial; Verify service created). Waiting on owner: fix `test_number` in
+  `.env.local` (had 11 digits after +91) and verify it under Twilio → Verified Caller IDs (trial).
+  Then: `bun run staff:phone <owner email> <number>`, live SMS test.
 - **Next:** move console data (patients etc.) to Neon; enquiry alerts with Rama-own accounts;
   connect Hostinger domain to Vercel; Phase 2 Lovable removal when owner is ready.
 
