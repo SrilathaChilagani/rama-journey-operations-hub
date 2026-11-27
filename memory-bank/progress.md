@@ -52,7 +52,7 @@ Last updated: 2026-11-27 — Claude Code (enquiries + staff logins on Neon; tele
 
 ## 🐞 Known Issues / Limitations
 - Twilio subaccount (renamed Ourspace → "Rama Cares") is a **Trial**: SMS only to numbers verified in
-  that subaccount (none yet). Upgrade before staff go live. Owner has no phone on file yet.
+  that subaccount (none yet). Upgrade before staff go live. Owner's number verified (trial) and on file → owner now needs SMS code.
 - No alert when an enquiry arrives (staff must check `/enquiries`).
 - WhatsApp number in `site-config.ts` empty → WhatsApp button hidden.
 - No rate limit on the public form beyond the honeypot.
@@ -87,4 +87,4 @@ Last updated: 2026-11-27 — Claude Code (enquiries + staff logins on Neon; tele
 | 2026-11-27 | Create owner's console login using the password in `.env.local` | Done — admin login created, verified on live site | DB only |
 | 2026-11-27 | Staff login: password + SMS code (Twilio Verify, Rama Cares subaccount) with code autofill | Done — code live; awaiting owner's Twilio subaccount keys + phone | ADR-009, `db/migrations/002…`, `src/server/twilio.ts` |
 | 2026-11-27 | Add Twilio variable placeholders to `.env.local`; always add placeholders for new keys | Done — owner fills values | `.env.local` (local only) |
-| 2026-11-27 | Use the Twilio keys added to `.env.local`; rename Ourspace subaccount to Rama Cares | Done — Verify service "Rama Cares" created, keys in Vercel, redeployed; awaiting corrected phone + trial number verification | Twilio + Vercel env |
+| 2026-11-27 | Use the Twilio keys added to `.env.local`; rename Ourspace subaccount to Rama Cares | Done — Verify service created, keys in Vercel; owner number verified on trial + attached to login; awaiting live SMS test | Twilio + Vercel env |
