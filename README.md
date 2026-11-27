@@ -75,6 +75,18 @@ Every staff server function calls `requireStaff()`. Page content mounts only aft
 data fetches never run unauthenticated. Create or reset a login (password typed at a hidden
 prompt): `bun run staff:create you@example.com "Full Name" admin`.
 
+**SMS sign-in code (ADR-009).** Staff with a mobile number on file must also enter a 6-digit
+code sent by **Twilio Verify** (Rama Cares' own Twilio subaccount). Twilio creates and checks the
+code — nothing about it is stored here. The pending sign-in is an httpOnly `rc_challenge`
+cookie (10 min, 5 code tries, 2 resends ≥30 s apart). "Trust this device for 30 days" sets
+`rc_trusted` and skips the SMS step (never the password); signing out keeps it. If a number is
+on file but Twilio isn't configured, sign-in **fails closed**. Staff without a number sign in
+with password only. Code entry autofills: `autocomplete="one-time-code"` (iOS/Android
+keyboards) plus the Web OTP API on Android Chrome; a full code submits itself.
+Set/clear a number: `bun run staff:phone you@example.com +919876543210` (or `none`).
+Env: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID`
+(`TWILIO_VERIFY_BASE_URL` is a local-testing override, ignored in production).
+
 ## Business settings
 
 `src/lib/site-config.ts` holds owner-supplied values that are safe to be public (never secrets):

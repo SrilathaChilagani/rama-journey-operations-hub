@@ -17,6 +17,9 @@
   lockout 5 fails/15 min. `requireStaff()` in every staff server fn. Page content that fetches
   data must be a child of `AppShell` so it mounts only after sign-in.
   `bun run staff:create <email> "<name>" [admin]`.
+- **SMS step (ADR-009):** staff with `phone` set → Twilio Verify code after password
+  (`src/server/twilio.ts`, REST, no SDK). Cookies `rc_challenge` (10 min) and `rc_trusted`
+  (30 days). Fails closed if Twilio env missing. `bun run staff:phone <email> <+E164|none>`.
 - **Tests:** Vitest + Testing Library (jsdom), setup `src/test/setup.ts`.
 - **Fonts:** Fraunces (display), Inter (sans), Manrope (patient home) — in `src/routes/__root.tsx`.
 - **Package manager:** bun (`bun.lock`) or npm.

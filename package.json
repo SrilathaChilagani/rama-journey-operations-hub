@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:migrate": "bun scripts/db-migrate.ts",
-    "staff:create": "bun scripts/create-staff.ts"
+    "staff:create": "bun scripts/create-staff.ts",
+    "staff:phone": "bun scripts/staff-phone.ts"
   },
   "overrides": {
     "rolldown": "1.2.1",

@@ -1,16 +1,23 @@
 import { Link } from "@tanstack/react-router";
-import { createContext, useContext, useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { resetDemo } from "@/lib/store";
-import { getStaff, staffLogin, staffLogout } from "@/lib/api/staff";
+import { getStaff, staffLogin, staffLogout, staffResendCode, staffVerifyCode } from "@/lib/api/staff";
 
 type StaffInfo = { name: string; email: string };
 const StaffContext = createContext<StaffInfo | null>(null);
 
-// Real sign-in: the server checks the password and sets an httpOnly session cookie.
-// Server functions that read staff data check that session again on every call.
+const LOGIN_ERRORS = {
+  invalid: "Email or password isn't right.",
+  locked: "Too many attempts. Try again in 15 minutes.",
+  "sms-unavailable": "We couldn't send your sign-in code. Please try again shortly or contact the admin.",
+} as const;
+
+// Real sign-in: the server checks the password (and, for staff with a phone on file, an SMS code)
+// and sets an httpOnly session cookie. Staff server functions check that session on every call.
 function StaffGate({ children }: { children: ReactNode }) {
   // undefined = still checking (server render / first paint) — avoids flashing either state.
   const [staff, setStaff] = useState<StaffInfo | null | undefined>(undefined);
+  const [phoneHint, setPhoneHint] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -21,6 +28,8 @@ function StaffGate({ children }: { children: ReactNode }) {
 
   if (staff === undefined) return <div className="min-h-screen bg-background" />;
   if (staff) return <StaffContext.Provider value={staff}>{children}</StaffContext.Provider>;
+  if (phoneHint)
+    return <CodeStep phoneHint={phoneHint} onSignedIn={setStaff} onRestart={() => { setPhoneHint(null); setPassword(""); }} />;
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -28,8 +37,9 @@ function StaffGate({ children }: { children: ReactNode }) {
     setError(null);
     try {
       const res = await staffLogin({ data: { email, password } });
-      if (res.ok) setStaff(res.staff);
-      else setError(res.reason === "locked" ? "Too many attempts. Try again in 15 minutes." : "Email or password isn't right.");
+      if (res.status === "signed-in") setStaff(res.staff);
+      else if (res.status === "code-sent") setPhoneHint(res.phoneHint);
+      else setError(LOGIN_ERRORS[res.reason]);
     } catch {
       setError("Couldn't sign in just now. Please try again.");
     } finally {
@@ -37,9 +47,8 @@ function StaffGate({ children }: { children: ReactNode }) {
     }
   };
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <form onSubmit={submit} className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-xs">
-        <p className="font-display text-2xl text-primary">Rama Cares</p>
+    <GateCard>
+      <form onSubmit={submit}>
         <h1 className="mt-2 text-lg font-semibold">Staff sign-in</h1>
         <label className="mt-5 block text-sm">
           Email
@@ -53,9 +62,131 @@ function StaffGate({ children }: { children: ReactNode }) {
         </label>
         {error && <p role="alert" className="mt-2 text-sm text-destructive">{error}</p>}
         <button type="submit" disabled={busy} className={`mt-4 w-full ${btnCls}`}>{busy ? "Signing in…" : "Sign in"}</button>
-        <Link to="/" className="mt-5 block text-xs text-muted-foreground underline">← Patient website</Link>
       </form>
+    </GateCard>
+  );
+}
+
+function GateCard({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-xs">
+        <p className="font-display text-2xl text-primary">Rama Cares</p>
+        {children}
+        <Link to="/" className="mt-5 block text-xs text-muted-foreground underline">← Patient website</Link>
+      </div>
     </div>
+  );
+}
+
+const CODE_LENGTH = 6;
+const RESEND_AFTER = 30;
+type OtpNavigator = { credentials: { get(o: unknown): Promise<{ code?: string } | null> } };
+
+// Step 2. Autofill: `autocomplete="one-time-code"` lets iPhone/iPad (Safari) and Android
+// keyboards offer the code straight from the SMS; on Android Chrome the Web OTP API also fills
+// it automatically when the SMS ends with the site's "@domain #code" line. A full code submits.
+function CodeStep({ phoneHint, onSignedIn, onRestart }: {
+  phoneHint: string; onSignedIn: (s: StaffInfo) => void; onRestart: () => void;
+}) {
+  const [code, setCode] = useState("");
+  const [remember, setRemember] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [wait, setWait] = useState(RESEND_AFTER);
+  const submitted = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (wait <= 0) return;
+    const t = window.setTimeout(() => setWait((w) => w - 1), 1000);
+    return () => window.clearTimeout(t);
+  }, [wait]);
+
+  useEffect(() => {
+    if (!("OTPCredential" in window)) return;
+    const ac = new AbortController();
+    (navigator as unknown as OtpNavigator).credentials
+      .get({ otp: { transport: ["sms"] }, signal: ac.signal })
+      .then((otp) => otp?.code && setCode(otp.code.replace(/\D/g, "").slice(0, CODE_LENGTH)))
+      .catch(() => { /* user dismissed, unsupported, or aborted */ });
+    return () => ac.abort();
+  }, []);
+
+  const verify = async (value: string) => {
+    if (busy || submitted.current === value) return;
+    submitted.current = value;
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const res = await staffVerifyCode({ data: { code: value, remember } });
+      if (res.status === "signed-in") return onSignedIn(res.staff);
+      if (res.reason === "expired") {
+        setError("This code has expired or had too many tries. Please sign in again.");
+        window.setTimeout(onRestart, 2500);
+      } else {
+        setError("That code isn't right. Check the SMS and try again.");
+        setCode("");
+      }
+    } catch {
+      setError("Couldn't check the code just now. Please try again.");
+      submitted.current = null;
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  useEffect(() => {
+    if (code.length === CODE_LENGTH) void verify(code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code]);
+
+  const resend = async () => {
+    setError(null);
+    setNotice(null);
+    const res = await staffResendCode().catch(() => null);
+    if (res?.status === "code-sent") {
+      setNotice(`A new code is on its way to ${res.phoneHint}.`);
+      setWait(RESEND_AFTER);
+      submitted.current = null;
+    } else if (res?.reason === "too-many" || res?.reason === "expired") {
+      setError("No more codes for this sign-in. Please sign in again.");
+      window.setTimeout(onRestart, 2500);
+    } else {
+      setError("Couldn't send a new code. Please wait a moment and try again.");
+    }
+  };
+
+  return (
+    <GateCard>
+      <form onSubmit={(e) => { e.preventDefault(); submitted.current = null; void verify(code); }}>
+        <h1 className="mt-2 text-lg font-semibold">Enter your sign-in code</h1>
+        <p className="mt-2 text-sm text-muted-foreground">We sent a 6-digit code by SMS to {phoneHint}.</p>
+        <label className="mt-5 block text-sm">
+          Code
+          <input name="code" required autoFocus autoComplete="one-time-code" inputMode="numeric"
+            pattern="[0-9]*" maxLength={CODE_LENGTH} placeholder="••••••"
+            className={`mt-2 ${inputCls} text-center font-mono text-2xl tracking-[0.5em]`}
+            value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, CODE_LENGTH))} />
+        </label>
+        <label className="mt-3 flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+          Trust this device for 30 days
+        </label>
+        {error && <p role="alert" className="mt-2 text-sm text-destructive">{error}</p>}
+        {notice && <p role="status" className="mt-2 text-sm text-muted-foreground">{notice}</p>}
+        <button type="submit" disabled={busy || code.length !== CODE_LENGTH} className={`mt-4 w-full ${btnCls}`}>
+          {busy ? "Checking…" : "Verify and sign in"}
+        </button>
+        <div className="mt-4 flex justify-between text-xs">
+          <button type="button" disabled={wait > 0} onClick={resend} className="text-primary underline disabled:text-muted-foreground disabled:no-underline">
+            {wait > 0 ? `Resend code in ${wait}s` : "Resend code"}
+          </button>
+          <button type="button" onClick={onRestart} className="text-muted-foreground underline">Use a different account</button>
+        </div>
+      </form>
+    </GateCard>
   );
 }
 

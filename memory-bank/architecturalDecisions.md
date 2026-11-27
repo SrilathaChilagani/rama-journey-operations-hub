@@ -109,3 +109,21 @@
 - **Consequences:** No automatic alert when an enquiry arrives; staff check `/enquiries`.
   Add notifications later with Rama Cares' own email/WhatsApp accounts. Patients/caregivers/
   shifts/incidents still browser-local until migrated.
+
+## ADR-009: Staff two-step sign-in — password + SMS code via Twilio Verify
+- **Date:** 2026-11-27
+- **Status:** Accepted
+- **Context:** Owner asked for SMS codes on staff login with autofill, keeping Rama Cares
+  separate from telemed-in.
+- **Decision:** Twilio Verify on a **Rama Cares Twilio subaccount** (own SID/token/service).
+  REST calls from `src/server/twilio.ts` (no SDK). Required for staff whose `staff_users.phone`
+  is set; fails closed if Twilio isn't configured; staff without a phone stay password-only
+  during rollout. Pending challenge and "trust this device 30 days" are random tokens in
+  httpOnly cookies, stored as SHA-256 (`staff_login_challenges`, `staff_trusted_devices`).
+  Autofill via `autocomplete="one-time-code"` + Web OTP API.
+- **Alternatives considered:** OTP-only login (weaker: phone alone = access); WhatsApp channel
+  (later, as fallback); storing our own codes + sending SMS (needs India DLT registration —
+  Verify handles it).
+- **Consequences:** Each SMS costs Twilio Verify per-verification fees. Android Chrome full
+  auto-fill needs the SMS to end with `@<domain> #<code>`, which requires a custom Verify
+  template once the domain is live; keyboard suggestion works without it.

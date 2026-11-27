@@ -45,7 +45,13 @@ Last updated: 2026-11-27 — Claude Code (enquiries + staff logins on Neon; tele
 - Pushed `e6da88e` + `ca03234`; Vercel auto-deployed. Live check: form saved a row in Neon
   (deleted after), live sign-in queries the DB, photos load.
 
+- Staff SMS sign-in code (ADR-009): migration 002 applied; two-step UI with autofill,
+  resend timer, trust-device; `staff:phone` script. 19 tests pass; browser e2e against a fake
+  Twilio passed (masked phone, no session before code, wrong code rejected, auto-submit,
+  trusted device skips code, untrusted device asked). Test data deleted.
+
 ## 🐞 Known Issues / Limitations
+- Twilio env not set yet → SMS step inactive (owner has no phone on file, so password-only).
 - No alert when an enquiry arrives (staff must check `/enquiries`).
 - WhatsApp number in `site-config.ts` empty → WhatsApp button hidden.
 - No rate limit on the public form beyond the honeypot.
@@ -78,3 +84,4 @@ Last updated: 2026-11-27 — Claude Code (enquiries + staff logins on Neon; tele
 | 2026-11-27 | Remove Rama Cares references from telemed-in; keep the two fully separate | Done — none existed in telemed-in; Rama `.env.local` trimmed of telemed values | `.env.local` (local only) |
 | 2026-11-27 | Rebuild enquiries + console protection on the new Neon DB (no Web3Forms/passcode) | Done — pushed `ca03234`, live-verified on Vercel | ADR-008, `db/`, `src/server/`, `src/lib/api/` |
 | 2026-11-27 | Create owner's console login using the password in `.env.local` | Done — admin login created, verified on live site | DB only |
+| 2026-11-27 | Staff login: password + SMS code (Twilio Verify, Rama Cares subaccount) with code autofill | Done — code live; awaiting owner's Twilio subaccount keys + phone | ADR-009, `db/migrations/002…`, `src/server/twilio.ts` |
