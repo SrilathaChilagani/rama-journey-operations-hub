@@ -6,7 +6,8 @@
 ## Current Focus
 - **2026-11-27:** Leaving Lovable (ADR-007) + DB-backed enquiries and staff logins (ADR-008)
   are built and tested locally. Pushed (`ca03234`) and live-verified on Vercel; `DATABASE_URL` re-set clean.
-  telemed-in fully separate (nothing of Rama's was in it). - Owner admin login created (password = `ADMIN_PORTAL_DEFAULT_PASSWORD` in `.env.local`).
+  telemed-in fully separate (nothing of Rama's was in it).
+- Owner admin login created (password = `ADMIN_PORTAL_DEFAULT_PASSWORD` in `.env.local`).
 - **Next:** move console data (patients etc.) to Neon; enquiry alerts with Rama-own accounts;
   connect Hostinger domain to Vercel; Phase 2 Lovable removal when owner is ready.
 
