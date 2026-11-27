@@ -7,7 +7,16 @@
 - **Framework:** TanStack Start v1 (React 19, Vite 8), file-based routing in `src/routes/`.
 - **Styling:** Tailwind CSS v4 (`@tailwindcss/vite`); theme tokens in `src/styles.css`.
 - **Components:** shadcn/ui in `src/components/ui/`; app shell in `src/components/rc/AppShell.tsx`.
-- **Data:** browser-local store `src/lib/store.ts` (localStorage key `rama-cares-v1`).
+- **Hosting:** Vercel project `rama-journey-operations-hub` (GitHub `main` auto-deploys);
+  env `DATABASE_URL`, `NITRO_PRESET=vercel`. Vercel CLI: unset the stale `VERCEL_TOKEN` first.
+- **Data:** Neon Postgres (`@neondatabase/serverless`), own DB, separate from telemed-in.
+  `src/server/` = server-only (db, auth, password); `src/lib/api/` = `createServerFn` wrappers;
+  `db/migrations/NNN_*.sql` applied by `bun run db:migrate`. Tables: enquiries, staff_users,
+  staff_sessions. Console demo data still in `src/lib/store.ts` (localStorage `rama-cares-v1`).
+- **Staff auth:** email + scrypt password, httpOnly `rc_staff` session cookie (SHA-256 stored),
+  lockout 5 fails/15 min. `requireStaff()` in every staff server fn. Page content that fetches
+  data must be a child of `AppShell` so it mounts only after sign-in.
+  `bun run staff:create <email> "<name>" [admin]`.
 - **Tests:** Vitest + Testing Library (jsdom), setup `src/test/setup.ts`.
 - **Fonts:** Fraunces (display), Inter (sans), Manrope (patient home) — in `src/routes/__root.tsx`.
 - **Package manager:** bun (`bun.lock`) or npm.

@@ -55,3 +55,57 @@
 - **Decision:** 10-photo collection in `src/lib/home-photos.ts`; index computed from the clock
   (Monday 00:00 IST, anchored 23 Nov 2026); selection hydrated in an effect.
 - **Consequences:** No storage needed; tests assert 10 distinct entries and the schedule.
+
+## ADR-006: Enquiries by Web3Forms email + WhatsApp; cosmetic console passcode
+- **Date:** 2026-11-26
+- **Status:** Accepted (stopgap until Lovable Cloud — ADR-003)
+- **Context:** Before go-live, enquiries only saved in the family's own browser, and the
+  console was linked publicly with no login. No backend available.
+- **Decision:** Public form POSTs to Web3Forms (owner's inbox; public access key in
+  `src/lib/site-config.ts`) and offers a prefilled `wa.me` button. Public form no longer writes
+  the local store. Console: footer link removed, `noindex`, passcode screen comparing SHA-256
+  against a hash in config; unlock remembered in localStorage (`rama-console-unlock`).
+- **Alternatives considered:** WhatsApp-only (family must tap Send — enquiries can be lost);
+  Lovable Cloud DB + auth (blocked on credits).
+- **Consequences:** Enquiry details (incl. health condition) pass through Web3Forms, a third
+  party. Passcode is not security — anyone can read the hash/bypass in devtools. Replace both
+  with Cloud tables + real staff auth when available.
+
+## ADR-007: Leave Lovable — host on Vercel, own backend services
+- **Date:** 2026-11-26
+- **Status:** Accepted (supersedes the "Lovable Cloud" plan in ADR-003 and ADR-006)
+- **Context:** Owner wants no long-term association with Lovable (no Lovable hosting, no
+  Lovable Cloud). May keep editing in Lovable for a while. Owner already runs telemed-in on
+  Vercel + Neon Postgres + Sentry + Twilio + WhatsApp Cloud API + Resend.
+- **Decision:**
+  - Phase 1 (now): deploy from GitHub to **Vercel**; keep code Lovable-compatible so the
+    editor still works. Outside the Lovable sandbox `@lovable.dev/vite-tanstack-config`
+    honours `NITRO_PRESET`/Vercel detection, so no build rewrite is needed yet.
+  - Backend: **new, separate Neon Postgres database** for Rama Cares (not telemed-in's DB).
+  - Messaging: owner chose to **reuse telemed-in's Twilio + WhatsApp + Resend accounts as-is**
+    (messages carry the Telemed sender/brand until swapped).
+  - Phase 2 (when owner stops using Lovable): replace the Lovable build package with plain
+    TanStack Start + nitro, move homepage photos from Lovable-hosted asset pointers into the
+    repo, replace `lovable-error-reporting.ts` with Sentry, remove `.lovable/`, Lovable meta
+    tags and Lovable rules in `AGENTS.md`.
+  - Secrets live only in Vercel env vars and a git-ignored `.env.local` — never in the repo.
+- **Alternatives considered:** Lovable hosting/Cloud (rejected by owner); shared telemed-in DB
+  (rejected — keeps two businesses' patient data apart); immediate Lovable cut (would break
+  the Lovable editor while owner still uses it).
+- **Consequences:** Phase 1 still leaves Lovable photo URLs and build package in place.
+  Families may see Telemed branding on WhatsApp/SMS until Rama Cares numbers exist.
+
+## ADR-008: Enquiries in Postgres + real staff logins (no third parties)
+- **Date:** 2026-11-27
+- **Status:** Accepted (supersedes ADR-006; refines ADR-007 messaging choice)
+- **Context:** Owner asked to keep telemed-in and Rama Cares fully separate and to build the
+  enquiry + console-gate work on the new Rama Cares Neon DB instead of Web3Forms/passcode.
+- **Decision:** Public form → `submitEnquiry` server fn → `enquiries` table (zod validation on
+  both sides, honeypot). Console → email + scrypt password logins in `staff_users`, httpOnly
+  session cookie with SHA-256 in `staff_sessions`, lockout after 5 fails. No Twilio/Resend/
+  WhatsApp API from telemed-in — nothing shared between the two businesses.
+- **Alternatives considered:** Twilio OTP via telemed-in's account (rejected — separation);
+  Web3Forms email (rejected — third party sees patient details).
+- **Consequences:** No automatic alert when an enquiry arrives; staff check `/enquiries`.
+  Add notifications later with Rama Cares' own email/WhatsApp accounts. Patients/caregivers/
+  shifts/incidents still browser-local until migrated.

@@ -31,6 +31,6 @@ use the editor.
 
 ## Project rules
 - SOP business rules (tiers, assignment gate, supervision cycles, complaint deadlines) live in src/lib/care-rules.ts with tests beside it; keep UI logic calling these. Why: one source of truth for the SOP.
-- Data is stored in browser localStorage via src/lib/store.ts because Lovable Cloud could not be enabled (no credits); migrate to Cloud tables when available. Why: shared, persistent data needs a backend.
+- Rama Cares has its own Neon Postgres database (separate from telemed-in) and Vercel project. Server-only code goes in src/server/, server functions in src/lib/api/, schema changes as numbered SQL in db/migrations/ (bun run db:migrate). Console demo data is still in localStorage via src/lib/store.ts until migrated. Why: keep the two businesses' data and infrastructure separate (ADR-007/008).
 - Scope patient-home styling tokens to its wrapper; this allows homepage refreshes without changing staff-console styling. Keep images as real files in src/assets (not Lovable asset pointers). Why: the site is hosted on Vercel, where Lovable-hosted asset URLs 404 (ADR-007).
 - Keep the homepage photo collection and deterministic India-time weekly selector in src/lib/home-photos.ts; hydrate date-dependent selection in an effect to avoid SSR mismatches without a scheduled backend job.

@@ -4,12 +4,13 @@
 > Session-state file for Claude Code.
 
 ## Current Focus
-- **Last task (2026-11-26):** Created the memory bank (`memory-bank/`) and `CLAUDE.md`
-  protocol, modelled on the telemed-in project. No application code changed.
-- **Next task:** Waiting for the user's next change request.
-
-## Files touched this task
-- `CLAUDE.md` (new), `memory-bank/*.md` (new).
+- **2026-11-27:** Leaving Lovable (ADR-007) + DB-backed enquiries and staff logins (ADR-008)
+  are built and tested locally. Vercel live with old `main`; `DATABASE_URL` re-set clean.
+  telemed-in fully separate (nothing of Rama's was in it). Local commits not pushed yet.
+- **Waiting on owner:** OK to push (Vercel auto-deploys, Lovable syncs); run
+  `bun run staff:create <email> "<name>" admin` to make their own login.
+- **Next:** move console data (patients etc.) to Neon; enquiry alerts with Rama-own accounts;
+  connect Hostinger domain to Vercel; Phase 2 Lovable removal when owner is ready.
 
 ## Assumptions
 - Claude Code is the only agent writing this memory bank (Lovable edits arrive as commits;

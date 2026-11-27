@@ -22,7 +22,7 @@ Standard Operating Procedures"). Those rules are code, not prose — see
 npm i            # or: bun install
 npm run dev      # dev server
 npm run build    # production build
-npm test         # vitest, 8 tests across 3 files
+npm test         # vitest, 13 tests across 4 files
 npm run lint     # eslint
 npm run format   # prettier
 ```
@@ -38,13 +38,16 @@ Typecheck with `npx tsc --noEmit` (the harness also runs it).
 | Framework | TanStack Start v1 (React 19, Vite 8), file-based routing in `src/routes/` |
 | Styling | Tailwind CSS v4 via `@tailwindcss/vite`, theme tokens in `src/styles.css` |
 | Components | shadcn/ui primitives in `src/components/ui/`, app shell in `src/components/rc/` |
-| State/data | Custom browser-local store in `src/lib/store.ts` (localStorage) — see [Data](#data) |
+| State/data | Neon Postgres via server functions (enquiries, staff logins); console demo data still browser-local in `src/lib/store.ts` — see [Data](#data) |
+| Hosting | Vercel (project `rama-journey-operations-hub`), GitHub `main` auto-deploys |
 | Tests | Vitest + Testing Library, jsdom; `src/test/setup.ts` |
 | Fonts | Fraunces (display), Inter (sans), Manrope (patient home) — loaded in `src/routes/__root.tsx` |
 
-There is **no database, no auth, and no server-side data** yet. Lovable Cloud could not be
-enabled when this was built (workspace had no credits), so persistence is browser-local.
-Migrating to Cloud tables is the single biggest open item.
+**Backend (ADR-007/008):** a dedicated Neon Postgres database for Rama Cares (separate from
+telemed-in). Server-only code lives in `src/server/` (`db.ts`, `auth.ts`, `password.ts`);
+server functions the pages call live in `src/lib/api/`. `DATABASE_URL` comes from Vercel env
+vars in production and from the git-ignored `.env.local` locally. Schema changes are numbered
+SQL files in `db/migrations/`, applied with `bun run db:migrate`.
 
 ---
 
@@ -54,6 +57,7 @@ Migrating to Cloud tables is the single biggest open item.
 | --- | --- | --- |
 | `/` | `src/routes/index.tsx` | Patient-facing home: hero photo, care promises, four service cards, standards, tier explainer, how-it-works, assessment form, footer |
 | `/services/$slug` | `src/routes/services.$slug.tsx` | Detail page per service: what's included, who is sent, nurse supervision, onboarding steps, FAQs, related services |
+| `/enquiries` | `src/routes/enquiries.tsx` | Website assessment requests from the database; mark new / contacted / closed |
 | `/console` | `src/routes/console.tsx` | Staff overview: active patients, awaiting assessment, bench count, open incidents, nurse visits due |
 | `/patients` | `src/routes/patients.tsx` | Patient list + new enquiry form; journey step, tier, caregiver assignment (gated) |
 | `/caregivers` | `src/routes/caregivers.tsx` | Roster by cadre, tier qualification, Deployed / Bench / Training |
@@ -63,8 +67,20 @@ Migrating to Cloud tables is the single biggest open item.
 Service slugs (`src/lib/services.ts`): `after-hospital-stay`, `elderly-care`, `rehabilitation`,
 `equipment-and-supplies`. An unknown slug throws `notFound()`.
 
-The staff console is reachable from the public footer link "Staff console" — it is **not**
-protected by a login. Anyone with the URL can see and edit the demo data in their own browser.
+The staff console is **not linked** from the public site and its pages send `noindex, nofollow`.
+`AppShell` wraps every console page in a **staff sign-in** (email + password). Passwords are
+scrypt-hashed in `staff_users`; a successful login sets an httpOnly `rc_staff` cookie whose
+SHA-256 is stored in `staff_sessions` (30 days). 5 wrong passwords lock the account for 15 min.
+Every staff server function calls `requireStaff()`. Page content mounts only after sign-in, so
+data fetches never run unauthenticated. Create or reset a login (password typed at a hidden
+prompt): `bun run staff:create you@example.com "Full Name" admin`.
+
+## Business settings
+
+`src/lib/site-config.ts` holds owner-supplied values that are safe to be public (never secrets):
+
+- `whatsappNumber` — digits with country code; powers the "Message us on WhatsApp" button
+  (prefilled with the enquiry) on the thank-you and error states. Empty → button hidden.
 
 ---
 
@@ -95,7 +111,11 @@ functions rather than re-stating the logic.
 
 ## Data
 
-`src/lib/store.ts` is the whole persistence layer:
+**Database (Neon):** `enquiries` (public form; status new/contacted/closed), `staff_users`,
+`staff_sessions`, `schema_migrations`. The public form validates with `enquirySchema`
+(`src/lib/enquiry.ts`) in the browser and again on the server, and has a hidden honeypot field.
+
+**Still browser-local (to migrate next):** `src/lib/store.ts`:
 
 - Types: `Patient`, `Caregiver`, `ShiftLog`, `Incident`, `Complaint`, `State`.
 - A seeded demo dataset (4 caregivers, 3 patients, 1 shift log, 1 Amber incident) so the console
@@ -106,8 +126,9 @@ functions rather than re-stating the logic.
 
 Consequences an agent must understand: data does **not** sync between devices or users; a new
 visitor sees the seed, not what someone else entered; clearing browser storage resets everything.
-The public enquiry form and the console's "New enquiry" both push a `Patient` with
-`journeyStep: 1`, `tier: null`, no caregiver — which is exactly the SOP's step-1 state.
+The console's "New enquiry" pushes a `Patient` with `journeyStep: 1`, `tier: null`, no
+caregiver — exactly the SOP's step-1 state. The **public** enquiry form writes to the database
+`enquiries` table, shown on `/enquiries`. No email/WhatsApp notification is sent yet.
 
 ---
 
@@ -117,9 +138,9 @@ The public enquiry form and the console's "New enquiry" both push a `Patient` wi
 hero shows a different photo each Monday at 00:00 India time (rotation anchored to
 Mon 23 Nov 2026), cycling through all ten before repeating. The index is computed from the
 clock, not stored, and the page hydrates the choice in an effect to avoid a server/client
-mismatch. Photos are Lovable asset pointers (`src/assets/*.asset.json`) whose `url` is a
-project-relative path — they only resolve when served by Lovable, so a plain local clone shows
-broken images. Adding a photo means adding an asset pointer and one entry to `HOME_PHOTOS`;
+mismatch. Photos are real files in `src/assets/*.jpg` imported directly (Lovable
+asset pointers were removed — they 404 outside Lovable hosting). Adding a photo means adding a
+file and one entry to `HOME_PHOTOS`;
 the tests assert ten distinct entries and the weekly schedule.
 
 ---
@@ -143,16 +164,19 @@ the tests assert ten distinct entries and the weekly schedule.
 
 ## Open items
 
-1. **Backend** — move `src/lib/store.ts` to real tables (Lovable Cloud) with auth for the
-   console. This is the blocker for everything below.
+1. **Console data to the database** — move patients, caregivers, shifts, incidents and
+   complaints from `src/lib/store.ts` to Neon tables behind `requireStaff()`.
 2. **Caregiver search + booking** — a "find care by area/PIN with a map" flow was built and
    then explicitly rolled back at the owner's request (`3a7957f`); it is not in the app. Any
    future version must still respect the assessment gate: searching is fine, confirming a
    caregiver is not, until step 2 is done.
 3. **Prices and pay** — all still `[TO SET]`.
-4. **Contact details** — phone/email/address for the public site are not final.
-5. **Domain** — a domain has been booked and will be connected later; nothing is configured.
-6. **Photos are Lovable-hosted** — swap for repo-local files if the app is hosted elsewhere.
+4. **Contact details** — phone/email/address for the public site are not final; the three
+   WhatsApp number in `src/lib/site-config.ts` must be filled before going live.
+   No notification is sent when an enquiry arrives yet (needs Rama Cares' own email/WhatsApp).
+5. **Domain** — booked on Hostinger; connect it to Vercel (Project → Settings → Domains).
+6. **Leave Lovable (Phase 2, ADR-007)** — replace `@lovable.dev/vite-tanstack-config`, Lovable
+   error reporter, meta tags, `.lovable/` and the Lovable block in `AGENTS.md`.
 
 ---
 
