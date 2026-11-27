@@ -25,9 +25,12 @@ export function AppShell({ title, subtitle, children }: { title: string; subtitl
             </Link>
           ))}
         </nav>
-        <button onClick={() => confirm("Reset all demo data?") && resetDemo()} className="mt-8 text-xs text-muted-foreground underline">Reset demo data</button>
+        <Link to="/" className="mt-8 block text-xs text-muted-foreground underline">← Patient website</Link>
+        <button onClick={() => confirm("Reset all demo data?") && resetDemo()} className="mt-3 text-xs text-muted-foreground underline">Reset demo data</button>
       </aside>
       <main className="p-5 md:p-10">
+        <button type="button" onClick={() => (window.history.length > 1 ? window.history.back() : (window.location.href = "/console"))}
+          className="mb-4 text-sm text-muted-foreground hover:text-primary">← Back</button>
         <h1 className="font-display text-3xl text-foreground md:text-4xl">{title}</h1>
         {subtitle && <p className="mt-2 max-w-2xl text-muted-foreground">{subtitle}</p>}
         <div className="mt-8">{children}</div>
