@@ -9,8 +9,7 @@
   telemed-in fully separate (nothing of Rama's was in it).
 - Owner admin login created (password = `ADMIN_PORTAL_DEFAULT_PASSWORD` in `.env.local`).
 - SMS sign-in code built (ADR-009). Twilio keys in `.env.local` + Vercel (subaccount renamed
-  "Rama Cares", Trial; Verify service created). Owner number verified on trial + attached (`staff:phone`). Next: owner does live SMS sign-in test.
-  If SMS fails, revert with `bun run staff:phone <owner email> none`.
+  "Rama Cares", Trial; Verify service created). Owner's live SMS sign-in works (confirmed 2026-11-27).
 - **Next:** move console data (patients etc.) to Neon; enquiry alerts with Rama-own accounts;
   connect Hostinger domain to Vercel; Phase 2 Lovable removal when owner is ready.
 
