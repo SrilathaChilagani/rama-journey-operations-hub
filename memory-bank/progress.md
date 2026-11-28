@@ -51,6 +51,12 @@ Last updated: 2026-11-27 — Claude Code (enquiries + staff logins on Neon; tele
   Twilio passed (masked phone, no session before code, wrong code rejected, auto-submit,
   trusted device skips code, untrusted device asked). Test data deleted.
 
+- **Phase 1 (ADR-010):** console data in Neon (migration 003), server-side SOP checks, DB
+  assignment-gate constraint, enquiry → patient button, demo data removed. 21 tests pass.
+  Browser e2e (11 steps) passed: enquiry→patient, caregivers, journey gates, server refused an
+  injected unqualified caregiver, tier change dropped unqualified backup, logs, incidents,
+  complaints, second device sees same data, audit column set. Test data deleted.
+
 ## 🐞 Known Issues / Limitations
 - Twilio subaccount (renamed Ourspace → "Rama Cares") is a **Trial**: SMS only to numbers verified in
   that subaccount (none yet). Upgrade before staff go live. Owner's number verified (trial) and on file → owner now needs SMS code.
@@ -58,12 +64,13 @@ Last updated: 2026-11-27 — Claude Code (enquiries + staff logins on Neon; tele
 - WhatsApp number in `site-config.ts` empty → WhatsApp button hidden.
 - No rate limit on the public form beyond the honeypot.
 - Existing Lovable code doesn't pass `prettier/prettier` lint (pre-existing).
-- Console patients/caregivers/shifts/incidents still per-browser localStorage.
+- Complaint/status checkboxes update after the server confirms (~0.5 s), not instantly.
+- All console data loads in one request — fine now, paginate when records grow.
 - Owner's shell profile sets a stale `VERCEL_TOKEN` that overrides `vercel login`; run the CLI
   as `env -u VERCEL_TOKEN vercel …` (or remove it from the profile).
 
 ## 📋 Next Up (open items from README)
-1. **Console data → Neon** — patients, caregivers, shifts, incidents, complaints behind `requireStaff()`.
+1. **Family portal (Phase 2)** — `/family`, guardian SMS sign-in, daily logs, care plan, concerns.
 1b. **Enquiry alerts** — with Rama Cares' own email/WhatsApp (not telemed-in's).
 2. **Caregiver search + booking** — only if owner asks again; must respect assessment gate.
 3. **Prices and pay** — still `[TO SET]`.
@@ -89,3 +96,4 @@ Last updated: 2026-11-27 — Claude Code (enquiries + staff logins on Neon; tele
 | 2026-11-27 | Staff login: password + SMS code (Twilio Verify, Rama Cares subaccount) with code autofill | Done — live SMS sign-in confirmed by owner (2026-11-27) | ADR-009, `db/migrations/002…`, `src/server/twilio.ts` |
 | 2026-11-27 | Add Twilio variable placeholders to `.env.local`; always add placeholders for new keys | Done — owner fills values | `.env.local` (local only) |
 | 2026-11-27 | Use the Twilio keys added to `.env.local`; rename Ourspace subaccount to Rama Cares | Done — Verify service created, keys in Vercel; owner number verified + attached; **live SMS sign-in confirmed working by owner** | Twilio + Vercel env |
+| 2026-11-27 | Phase 1: move console data (patients, caregivers, care logs, incidents, complaints) from browser storage to the Neon DB | Done | ADR-010, `db/migrations/003…`, `src/lib/api/console.ts` |

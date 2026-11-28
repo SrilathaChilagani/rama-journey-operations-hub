@@ -12,7 +12,9 @@
 - **Data:** Neon Postgres (`@neondatabase/serverless`), own DB, separate from telemed-in.
   `src/server/` = server-only (db, auth, password); `src/lib/api/` = `createServerFn` wrappers;
   `db/migrations/NNN_*.sql` applied by `bun run db:migrate`. Tables: enquiries, staff_users,
-  staff_sessions. Console demo data still in `src/lib/store.ts` (localStorage `rama-cares-v1`).
+  staff_*, patients, caregivers, shift_logs, incidents, complaints. `src/lib/store.ts` = client
+  cache (`loadConsole` after sign-in, `useStore()!`, `run(serverFn)` shows refusals + reloads).
+  Console server fns: `src/lib/api/console.ts` (requireStaff + care-rules re-check).
 - **Staff auth:** email + scrypt password, httpOnly `rc_staff` session cookie (SHA-256 stored),
   lockout 5 fails/15 min. `requireStaff()` in every staff server fn. Page content that fetches
   data must be a child of `AppShell` so it mounts only after sign-in.

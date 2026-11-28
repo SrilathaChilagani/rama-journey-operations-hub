@@ -5,11 +5,15 @@ import { fmt, useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/console")({
   head: head("Overview", "Rama Cares operations overview: patients, nurse visits, incidents."),
-  component: Index,
+  component: () => (
+    <AppShell title="Good to see you." subtitle="Care with the attention a patient's own children would give. Here is what needs you today.">
+      <Index />
+    </AppShell>
+  ),
 });
 
 function Index() {
-  const s = useStore();
+  const s = useStore()!;
   const now = new Date();
   const active = s.patients.filter((p) => p.journeyStep >= 5 && p.journeyStep < 8);
   const dueVisits = active.filter((p) => p.tier && p.careStart).map((p) => ({ p, due: nextNurseVisitDue(p.tier!, p.careStart!, p.lastNurseVisit) })).sort((a, b) => +a.due - +b.due);
@@ -21,7 +25,7 @@ function Index() {
     { label: "Open incidents", value: openIncidents.length },
   ];
   return (
-    <AppShell title="Good to see you." subtitle="Care with the attention a patient's own children would give. Here is what needs you today.">
+    <>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map((x) => <Card key={x.label}><p className="text-sm text-muted-foreground">{x.label}</p><p className="mt-1 font-display text-4xl text-primary">{x.value}</p></Card>)}
       </div>
@@ -64,6 +68,6 @@ function Index() {
           ))}
         </div>
       </Card>
-    </AppShell>
+    </>
   );
 }

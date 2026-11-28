@@ -127,3 +127,19 @@
 - **Consequences:** Each SMS costs Twilio Verify per-verification fees. Android Chrome full
   auto-fill needs the SMS to end with `@<domain> #<code>`, which requires a custom Verify
   template once the domain is live; keyboard suggestion works without it.
+
+## ADR-010: Console data in Postgres; SOP rules enforced server-side
+- **Date:** 2026-11-27
+- **Status:** Accepted (supersedes ADR-003)
+- **Context:** Patients, caregivers, logs, incidents and complaints lived in each browser, so
+  staff couldn't share data and a family portal was impossible.
+- **Decision:** Migration 003 adds those tables (with `created_by`-style audit columns).
+  `src/lib/api/console.ts` exposes one server fn per action; each requires a staff session and
+  re-runs SOP checks via shared functions in `care-rules.ts` (`advanceBlockReason`,
+  `assignmentBlockReason`). DB check constraint enforces the assignment gate. Tier changes drop
+  newly-unqualified caregivers. Client `store.ts` is a cache loaded after sign-in; `run()` shows
+  server refusals. Demo seed removed — console starts empty.
+- **Alternatives considered:** React Query per page (more moving parts for small data); trust
+  UI-only checks (bypassable).
+- **Consequences:** One fetch loads all console data (fine at current scale; paginate later).
+  Old localStorage demo data is ignored.

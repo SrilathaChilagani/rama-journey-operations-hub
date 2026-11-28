@@ -38,7 +38,7 @@ Typecheck with `npx tsc --noEmit` (the harness also runs it).
 | Framework | TanStack Start v1 (React 19, Vite 8), file-based routing in `src/routes/` |
 | Styling | Tailwind CSS v4 via `@tailwindcss/vite`, theme tokens in `src/styles.css` |
 | Components | shadcn/ui primitives in `src/components/ui/`, app shell in `src/components/rc/` |
-| State/data | Neon Postgres via server functions (enquiries, staff logins); console demo data still browser-local in `src/lib/store.ts` — see [Data](#data) |
+| State/data | Neon Postgres via server functions (`src/lib/api/`); client cache in `src/lib/store.ts` — see [Data](#data) |
 | Hosting | Vercel (project `rama-journey-operations-hub`), GitHub `main` auto-deploys |
 | Tests | Vitest + Testing Library, jsdom; `src/test/setup.ts` |
 | Fonts | Fraunces (display), Inter (sans), Manrope (patient home) — loaded in `src/routes/__root.tsx` |
@@ -123,24 +123,24 @@ functions rather than re-stating the logic.
 
 ## Data
 
-**Database (Neon):** `enquiries` (public form; status new/contacted/closed), `staff_users`,
-`staff_sessions`, `schema_migrations`. The public form validates with `enquirySchema`
-(`src/lib/enquiry.ts`) in the browser and again on the server, and has a hidden honeypot field.
+**Database (Neon)** — everything is shared and server-side; nothing is kept in the browser:
+`enquiries`, `patients`, `caregivers`, `shift_logs`, `incidents`, `complaints`, plus staff auth
+tables (`staff_users`, `staff_sessions`, `staff_login_challenges`, `staff_trusted_devices`) and
+`schema_migrations`. Records note which staff member created them (`created_by`,
+`recorded_by`, `reported_by`, `logged_by`).
 
-**Still browser-local (to migrate next):** `src/lib/store.ts`:
-
-- Types: `Patient`, `Caregiver`, `ShiftLog`, `Incident`, `Complaint`, `State`.
-- A seeded demo dataset (4 caregivers, 3 patients, 1 shift log, 1 Amber incident) so the console
-  is never empty.
-- `useStore()` — React `useSyncExternalStore` hook; `update(fn)` — immutable write;
-  `resetDemo()` — restore the seed; `uid()` and `fmt()` helpers.
-- Everything is saved to localStorage under the key `rama-cares-v1`, per browser.
-
-Consequences an agent must understand: data does **not** sync between devices or users; a new
-visitor sees the seed, not what someone else entered; clearing browser storage resets everything.
-The console's "New enquiry" pushes a `Patient` with `journeyStep: 1`, `tier: null`, no
-caregiver — exactly the SOP's step-1 state. The **public** enquiry form writes to the database
-`enquiries` table, shown on `/enquiries`. No email/WhatsApp notification is sent yet.
+- `src/lib/api/console.ts` — one server function per console action. Each calls
+  `requireStaff()` and re-checks SOP rules on the server with the same functions the UI uses
+  (`advanceBlockReason`, `assignmentBlockReason`, `cadreQualifies`). The database also enforces
+  the assignment gate (`patients_assignment_gate` check). Raising a tier drops a caregiver/backup
+  who is no longer qualified.
+- `src/lib/store.ts` — client cache: `AppShell` loads data after sign-in; pages read
+  `useStore()!` (content mounts only once loaded) and change data with `run(serverFn)`, which
+  shows a server refusal (e.g. an SOP rule) in a banner and reloads.
+- An enquiry becomes a patient (step 1) with **Create patient record** on `/enquiries`.
+- The public form validates with `enquirySchema` (`src/lib/enquiry.ts`) in the browser and on
+  the server, with a hidden honeypot. No email/WhatsApp alert is sent yet.
+- No demo data: the console starts empty.
 
 ---
 
@@ -176,8 +176,8 @@ the tests assert ten distinct entries and the weekly schedule.
 
 ## Open items
 
-1. **Console data to the database** — move patients, caregivers, shifts, incidents and
-   complaints from `src/lib/store.ts` to Neon tables behind `requireStaff()`.
+1. **Family portal (Phase 2)** — `/family`, guardian phone + SMS code, patient's daily logs,
+   care plan, nurse visits, raise a concern; homepage styling.
 2. **Caregiver search + booking** — a "find care by area/PIN with a map" flow was built and
    then explicitly rolled back at the owner's request (`3a7957f`); it is not in the app. Any
    future version must still respect the assessment gate: searching is fine, confirming a

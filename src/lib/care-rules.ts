@@ -56,3 +56,23 @@ export function complaintDeadlines(received: string) {
   const t = new Date(received).getTime();
   return { acknowledgeBy: new Date(t + 2 * 3_600_000), resolveBy: new Date(t + 48 * 3_600_000) };
 }
+
+/** Why a patient can't move to the next journey step, or null if they can. Same rule in UI and server. */
+export function advanceBlockReason(p: { journeyStep: number; tier: Tier | null; caregiverId: string | null }): string | null {
+  if (p.journeyStep >= 8) return "The care journey is already closed.";
+  if (p.journeyStep === 2 && !p.tier) return "A nurse must set the tier at the home assessment first.";
+  if (p.journeyStep === 4 && !p.caregiverId) return "Assign a caregiver before care starts.";
+  return null;
+}
+
+/** Why this caregiver can't be placed with this patient, or null if they can. */
+export function assignmentBlockReason(
+  p: { journeyStep: number; tier: Tier | null; caregiverId: string | null },
+  c: { id: string; cadre: Cadre },
+  role: "caregiver" | "backup",
+): string | null {
+  if (!canAssignCaregiver(p)) return "Complete the home assessment and set a tier before assigning anyone.";
+  if (!cadreQualifies(c.cadre, p.tier!)) return `A ${c.cadre} is not qualified for ${p.tier}.`;
+  if (role === "backup" && c.id === p.caregiverId) return "The backup must be a different person from the main caregiver.";
+  return null;
+}

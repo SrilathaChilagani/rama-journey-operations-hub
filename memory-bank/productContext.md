@@ -11,8 +11,10 @@
     how it works, assessment request form.
   - **Staff operations console** (`/console`, `/patients`, `/caregivers`, `/shifts`,
     `/incidents`) — runs the SOP workflow end to end.
-- A family enquiry from the public site appears immediately in the console (same store).
-- Built and edited in **Lovable**; changes there commit to this repo and vice versa.
+- A family enquiry from the public site lands in the database and shows on `/enquiries`;
+  staff turn it into a patient record with one click.
+- Hosted on **Vercel** with its own Neon Postgres (separate from telemed-in). Still editable in
+  Lovable for now; leaving Lovable entirely is planned (ADR-007).
 
 ## Non-negotiables
 - The SOP is code, not prose: business rules live in `src/lib/care-rules.ts` only.
@@ -37,9 +39,10 @@ Unknown slug → `notFound()`.
 | Journey (8 steps) | Enquiry → Home assessment → Care plan & quote → Match & introduce → Care starts → 48-hour review → Ongoing care → Closure |
 
 ## Roles
-- Families / patients (public site, no login).
+- Families / patients (public site, no login; family portal planned).
 - Staff: Care Manager, nurses, caregivers by cadre (Care Companion, Certified Caregiver,
-  Senior Caregiver, Registered Nurse). **No auth yet** — console is open to anyone with the URL.
+  Senior Caregiver, Registered Nurse). Console needs staff sign-in (password + SMS code for staff
+  with a phone on file).
 
 ## Owner decisions on record
 - Find-care search/map/booking flow was **rolled back at the owner's request** (2026-11-23,

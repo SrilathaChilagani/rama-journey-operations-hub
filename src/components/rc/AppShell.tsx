@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { createContext, useContext, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { resetDemo } from "@/lib/store";
+import { clearConsole, dismissError, loadConsole, useConsoleStatus } from "@/lib/store";
+import { getConsole } from "@/lib/api/console";
 import { getStaff, staffLogin, staffLogout, staffResendCode, staffVerifyCode } from "@/lib/api/staff";
 
 type StaffInfo = { name: string; email: string };
@@ -216,7 +217,6 @@ export function AppShell({ title, subtitle, children }: { title: string; subtitl
           ))}
         </nav>
         <Link to="/" className="mt-8 block text-xs text-muted-foreground underline">← Patient website</Link>
-        <button onClick={() => confirm("Reset all demo data?") && resetDemo()} className="mt-3 text-xs text-muted-foreground underline">Reset demo data</button>
         <SignedInAs />
       </aside>
       <main className="p-5 md:p-10">
@@ -224,10 +224,31 @@ export function AppShell({ title, subtitle, children }: { title: string; subtitl
           className="mb-4 text-sm text-muted-foreground hover:text-primary">← Back</button>
         <h1 className="font-display text-3xl text-foreground md:text-4xl">{title}</h1>
         {subtitle && <p className="mt-2 max-w-2xl text-muted-foreground">{subtitle}</p>}
-        <div className="mt-8">{children}</div>
+        <div className="mt-8"><ConsoleData>{children}</ConsoleData></div>
       </main>
     </div>
     </StaffGate>
+  );
+}
+
+// Loads shared console data once signed in; page content mounts only when it's ready, so pages
+// can use useStore()! safely. Shows a server refusal (e.g. an SOP rule) above the page.
+function ConsoleData({ children }: { children: ReactNode }) {
+  const { data, error, busy } = useConsoleStatus();
+  useEffect(() => {
+    if (!data) void loadConsole(() => getConsole());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return (
+    <>
+      {error && (
+        <div role="alert" className="mb-6 flex items-start justify-between gap-4 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+          <p>{error}</p>
+          {data && <button onClick={dismissError} className="shrink-0 underline">Dismiss</button>}
+        </div>
+      )}
+      {data ? <div aria-busy={busy}>{children}</div> : !error && <p className="text-sm text-muted-foreground">Loading…</p>}
+    </>
   );
 }
 
@@ -237,7 +258,7 @@ function SignedInAs() {
   return (
     <div className="mt-6 border-t border-border pt-4 text-xs text-muted-foreground">
       <p>Signed in as {staff.name}</p>
-      <button onClick={() => staffLogout().finally(() => window.location.reload())} className="mt-2 underline">Sign out</button>
+      <button onClick={() => { clearConsole(); staffLogout().finally(() => window.location.reload()); }} className="mt-2 underline">Sign out</button>
     </div>
   );
 }
