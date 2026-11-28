@@ -15,6 +15,7 @@ import { Route as ConsoleRouteImport } from './routes/console'
 import { Route as EnquiriesRouteImport } from './routes/enquiries'
 import { Route as FamilyRouteImport } from './routes/family'
 import { Route as IncidentsRouteImport } from './routes/incidents'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as PatientsRouteImport } from './routes/patients'
 import { Route as ShiftsRouteImport } from './routes/shifts'
 import { Route as ServicesSlugRouteImport } from './routes/services.$slug'
@@ -49,6 +50,11 @@ const IncidentsRoute = IncidentsRouteImport.update({
   path: '/incidents',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PatientsRoute = PatientsRouteImport.update({
   id: '/patients',
   path: '/patients',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/enquiries': typeof EnquiriesRoute
   '/family': typeof FamilyRoute
   '/incidents': typeof IncidentsRoute
+  '/notifications': typeof NotificationsRoute
   '/patients': typeof PatientsRoute
   '/shifts': typeof ShiftsRoute
   '/services/$slug': typeof ServicesSlugRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/enquiries': typeof EnquiriesRoute
   '/family': typeof FamilyRoute
   '/incidents': typeof IncidentsRoute
+  '/notifications': typeof NotificationsRoute
   '/patients': typeof PatientsRoute
   '/shifts': typeof ShiftsRoute
   '/services/$slug': typeof ServicesSlugRoute
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/enquiries': typeof EnquiriesRoute
   '/family': typeof FamilyRoute
   '/incidents': typeof IncidentsRoute
+  '/notifications': typeof NotificationsRoute
   '/patients': typeof PatientsRoute
   '/shifts': typeof ShiftsRoute
   '/services/$slug': typeof ServicesSlugRoute
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/enquiries'
     | '/family'
     | '/incidents'
+    | '/notifications'
     | '/patients'
     | '/shifts'
     | '/services/$slug'
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
     | '/enquiries'
     | '/family'
     | '/incidents'
+    | '/notifications'
     | '/patients'
     | '/shifts'
     | '/services/$slug'
@@ -130,6 +141,7 @@ export interface FileRouteTypes {
     | '/enquiries'
     | '/family'
     | '/incidents'
+    | '/notifications'
     | '/patients'
     | '/shifts'
     | '/services/$slug'
@@ -142,6 +154,7 @@ export interface RootRouteChildren {
   EnquiriesRoute: typeof EnquiriesRoute
   FamilyRoute: typeof FamilyRoute
   IncidentsRoute: typeof IncidentsRoute
+  NotificationsRoute: typeof NotificationsRoute
   PatientsRoute: typeof PatientsRoute
   ShiftsRoute: typeof ShiftsRoute
   ServicesSlugRoute: typeof ServicesSlugRoute
@@ -191,6 +204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IncidentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/patients': {
       id: '/patients'
       path: '/patients'
@@ -222,6 +242,7 @@ const rootRouteChildren: RootRouteChildren = {
   EnquiriesRoute: EnquiriesRoute,
   FamilyRoute: FamilyRoute,
   IncidentsRoute: IncidentsRoute,
+  NotificationsRoute: NotificationsRoute,
   PatientsRoute: PatientsRoute,
   ShiftsRoute: ShiftsRoute,
   ServicesSlugRoute: ServicesSlugRoute,

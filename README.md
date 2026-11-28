@@ -58,6 +58,7 @@ SQL files in `db/migrations/`, applied with `bun run db:migrate`.
 | `/` | `src/routes/index.tsx` | Patient-facing home: hero photo, care promises, four service cards, standards, tier explainer, how-it-works, assessment form, footer |
 | `/services/$slug` | `src/routes/services.$slug.tsx` | Detail page per service: what's included, who is sent, nurse supervision, onboarding steps, FAQs, related services |
 | `/family` | `src/routes/family.tsx` | **Family portal** (homepage styling): guardian signs in with phone + SMS code; sees journey step, caregiver + backup, nurse schedule, daily reports, incident status; raises concerns |
+| `/notifications` | `src/routes/notifications.tsx` | Log of every WhatsApp/email sent (staff alerts, family updates) with status and failure reason |
 | `/enquiries` | `src/routes/enquiries.tsx` | Website assessment requests from the database; mark new / contacted / closed |
 | `/console` | `src/routes/console.tsx` | Staff overview: active patients, awaiting assessment, bench count, open incidents, nurse visits due |
 | `/patients` | `src/routes/patients.tsx` | Patient list + new enquiry form; journey step, tier, caregiver assignment (gated) |
@@ -102,6 +103,27 @@ Env: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID`
 - Concerns raised in the portal become `complaints` rows with `raised_by_contact`, shown to
   staff tagged "from family" and run on the SOP's 2 h / 48 h deadlines.
 - Server functions: `src/lib/api/family.ts`. Footer link "Family portal" on the homepage.
+
+## Notifications (ADR-012)
+
+`src/server/notify.ts` sends **WhatsApp** (Twilio Messages API, Rama Cares subaccount) and
+**email** (Resend); wording lives in `src/lib/notify-messages.ts`. Every attempt is a row in
+`notifications` (`sent` / `failed` + reason / `skipped` when a channel isn't configured) and a
+failure never blocks the action that caused it.
+
+| Trigger | Recipients |
+| --- | --- |
+| Website enquiry | Staff: `STAFF_ALERT_WHATSAPP`, `STAFF_ALERT_EMAILS` |
+| Family concern (portal) | Staff, as above |
+| Red/Amber incident (not Green) | Family contacts who consented in the portal and keep "Incident alerts" on — kind only, never staff notes |
+| Daily care log saved | Family contacts who consented and keep "Daily care report" on |
+
+Env: `RESEND_API_KEY`, `NOTIFY_EMAIL_FROM`, `STAFF_ALERT_EMAILS`, `TWILIO_WHATSAPP_FROM`,
+`STAFF_ALERT_WHATSAPP`, `APP_BASE_URL` (falls back to Vercel's production URL). Sandbox
+WhatsApp only reaches numbers that joined the sandbox, and free text only within 24 h of their
+last message; for production set `TWILIO_WA_TEMPLATE_<KIND>` (approved Content SID, body passed
+as `{{1}}`). Local-test overrides `TWILIO_API_BASE_URL`, `RESEND_BASE_URL` are ignored in
+production.
 
 ## Business settings
 
@@ -192,8 +214,8 @@ the tests assert ten distinct entries and the weekly schedule.
 
 ## Open items
 
-1. **Notifications** — alert staff to new enquiries/family concerns, and send families their
-   daily report by SMS/WhatsApp (Rama Cares Twilio subaccount).
+1. **Go-live for messaging** — upgrade Twilio from Trial, register a Rama Cares WhatsApp sender
+   and templates (Meta), verify the domain in Resend.
 2. **Caregiver search + booking** — a "find care by area/PIN with a map" flow was built and
    then explicitly rolled back at the owner's request (`3a7957f`); it is not in the app. Any
    future version must still respect the assessment gate: searching is fine, confirming a

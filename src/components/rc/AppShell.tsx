@@ -198,6 +198,7 @@ const NAV = [
   { to: "/caregivers", label: "Caregivers" },
   { to: "/shifts", label: "Daily care log" },
   { to: "/incidents", label: "Incidents & complaints" },
+  { to: "/notifications", label: "Notifications" },
 ] as const;
 
 export function AppShell({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {

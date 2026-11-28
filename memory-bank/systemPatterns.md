@@ -75,3 +75,9 @@ typecheck `npx tsc --noEmit`.
   enumeration; per-number hourly limit), `src/lib/api/family.ts` (every read via
   `requireFamilyAccess`), `src/routes/family.tsx` (`.patient-home` styling). Phones via
   `src/lib/phone.ts` `normalizePhone`.
+- **Notifications (ADR-012):** `src/server/notify.ts` (`notifyStaff`, `notifyFamily`; never throws;
+  logs to `notifications`), wording in `src/lib/notify-messages.ts`. Family messages only after
+  portal consent + per-contact prefs (`notify_daily`, `notify_incidents`).
+- **Local testing gotcha:** the Vite/Nitro dev server reads `.env.local` itself. To run with fake
+  providers, park `.env.local`, export a scratchpad test env, run `npx vite dev`, then restore
+  `.env.local` immediately.

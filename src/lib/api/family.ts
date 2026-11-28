@@ -10,6 +10,8 @@ import {
   startFamilyLogin, verifyFamilyCode,
 } from "@/server/family-auth";
 import { query } from "@/server/db";
+import { concernAlert } from "@/lib/notify-messages";
+import { baseUrl, notifyStaff } from "@/server/notify";
 
 export type { FamilyLink } from "@/server/family-auth";
 
@@ -53,12 +55,15 @@ export type FamilyView = {
   logs: { id: string; date: string; bp: string; spo2: string; meals: string; meds: string; mood: string; notes: string; caregiver: string | null }[];
   incidents: { id: string; severity: Severity; kind: string; at: string; resolved: boolean }[];
   concerns: { id: string; text: string; at: string; acknowledgedAt: string | null; resolvedAt: string | null; raisedBy: string }[];
+  prefs: { daily: boolean; incidents: boolean };
 };
 
 export const familyView = createServerFn({ method: "GET" })
   .validator(z.object({ patientId: z.string().uuid() }))
   .handler(async ({ data }): Promise<FamilyView> => {
-    await requireFamilyAccess(data.patientId);
+    const link = await requireFamilyAccess(data.patientId);
+    const [prefs] = await query<{ daily: boolean; incidents: boolean }>(
+      `select notify_daily as daily, notify_incidents as incidents from family_contacts where id = $1`, [link.contactId]);
     type P = { name: string; age: number; service_line: string; journey_step: number; tier: Tier | null; care_start: Ts; last_nurse_visit: Ts; caregiver_id: string | null; backup_id: string | null };
     const [p] = await query<P>(
       `select name, age, service_line, journey_step, tier, care_start, last_nurse_visit, caregiver_id, backup_id
@@ -95,6 +100,7 @@ export const familyView = createServerFn({ method: "GET" })
       logs: logs.map((l) => ({ id: l.id, date: iso(l.logged_at)!, bp: l.bp, spo2: l.spo2, meals: l.meals, meds: l.meds, mood: l.mood, notes: l.notes, caregiver: l.caregiver })),
       incidents: incidents.map((i) => ({ id: i.id, severity: i.severity, kind: i.kind, at: iso(i.occurred_at)!, resolved: i.resolved_at != null })),
       concerns: concerns.map((k) => ({ id: k.id, text: k.text, at: iso(k.received_at)!, acknowledgedAt: iso(k.acknowledged_at), resolvedAt: iso(k.resolved_at), raisedBy: k.raised_by })),
+      prefs: prefs ?? { daily: true, incidents: true },
     };
   });
 
@@ -104,5 +110,15 @@ export const familyRaiseConcern = createServerFn({ method: "POST" })
     const link = await requireFamilyAccess(data.patientId);
     await query(`insert into complaints (patient_id, text, raised_by_contact) values ($1, $2, $3)`,
       [data.patientId, data.text, link.contactId]);
+    await notifyStaff("concern_new", concernAlert({ patientName: link.patientName, raisedBy: link.contactName, text: data.text }, baseUrl()), data.patientId);
+    return { ok: true as const };
+  });
+
+export const familySetPrefs = createServerFn({ method: "POST" })
+  .validator(z.object({ patientId: z.string().uuid(), daily: z.boolean(), incidents: z.boolean() }))
+  .handler(async ({ data }) => {
+    const link = await requireFamilyAccess(data.patientId);
+    await query(`update family_contacts set notify_daily = $2, notify_incidents = $3 where id = $1`,
+      [link.contactId, data.daily, data.incidents]);
     return { ok: true as const };
   });

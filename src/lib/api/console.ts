@@ -8,6 +8,8 @@ import { normalizePhone } from "@/lib/phone";
 import type { ConsoleState } from "@/lib/store";
 import { requireStaff } from "@/server/auth";
 import { query } from "@/server/db";
+import { dailyReportMessage, incidentFamilyMessage } from "@/lib/notify-messages";
+import { baseUrl, notifyFamily } from "@/server/notify";
 
 const id = z.string().uuid();
 const text = (max: number) => z.string().trim().max(max);
@@ -211,6 +213,9 @@ export const addShiftLog = createServerFn({ method: "POST" })
        values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [data.patientId, p.caregiver_id, data.bp, data.spo2, data.meals, data.meds, data.mood, data.notes, staff.id],
     );
+    const [pt] = await query<{ name: string }>(`select name from patients where id = $1`, [data.patientId]);
+    await notifyFamily("daily_report", data.patientId,
+      dailyReportMessage({ patientName: pt!.name, date: new Date().toISOString(), ...data }, baseUrl()));
   });
 
 // ---- Incidents ----
@@ -223,6 +228,11 @@ export const addIncident = createServerFn({ method: "POST" })
       `insert into incidents (patient_id, severity, kind, description, reported_by) values ($1, $2, $3, $4, $5)`,
       [data.patientId, data.severity, data.kind, data.description, staff.id],
     );
+    if (data.severity !== "Green") {
+      const [pt] = await query<{ name: string }>(`select name from patients where id = $1`, [data.patientId]);
+      await notifyFamily("incident_family", data.patientId,
+        incidentFamilyMessage({ patientName: pt!.name, severity: data.severity, kind: data.kind }, baseUrl()));
+    }
   });
 
 export const setIncidentResolved = createServerFn({ method: "POST" })
@@ -272,3 +282,18 @@ export const removeFamilyContact = createServerFn({ method: "POST" })
     // Kept (inactive) so concerns they raised stay attributed; access ends on their next request.
     await query(`update family_contacts set active = false where id = $1`, [data.id]);
   });
+
+// ---- Notifications log ----
+export type NotificationRow = {
+  id: string; kind: string; channel: string; recipient: string; subject: string; body: string;
+  status: "pending" | "sent" | "failed" | "skipped"; error: string | null; created_at: string; patient: string | null;
+};
+export const listNotifications = createServerFn({ method: "GET" }).handler(async () => {
+  await requireStaff();
+  return query<NotificationRow>(
+    `select n.id, n.kind, n.channel, n.recipient, n.subject, n.body, n.status, n.error,
+            to_char(n.created_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at, p.name as patient
+       from notifications n left join patients p on p.id = n.patient_id
+      order by n.created_at desc limit 200`,
+  );
+});

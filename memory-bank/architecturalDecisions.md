@@ -158,3 +158,19 @@
   showing full incident notes (internal language, may alarm without context).
 - **Consequences:** International SMS cost per sign-in (30-day session limits it). Twilio trial
   can only text verified numbers. Staff must keep family contacts current.
+
+## ADR-012: Notifications — WhatsApp (Twilio) + email (Resend), logged outbox
+- **Date:** 2026-11-27
+- **Status:** Accepted
+- **Context:** Owner wants alerts for new enquiries and family concerns, and family messages for
+  Red/Amber incidents and daily reports. Plain SMS to Indian numbers needs DLT registration
+  (weeks); families abroad are WhatsApp-first.
+- **Decision:** WhatsApp via Twilio Messages API on the Rama Cares subaccount (sandbox for
+  testing; approved templates via `TWILIO_WA_TEMPLATE_<KIND>` for production) + email via a Rama
+  Cares Resend account for staff. Send inline after the DB write, 8 s timeout, never throw; log
+  every attempt to `notifications`. Family messages require portal consent and per-contact
+  preferences; families can switch them off in the portal; incident messages carry kind only.
+- **Alternatives considered:** SMS (DLT delay); email-only (no family reach); background queue +
+  cron retries (more moving parts; can add later — failed rows are already recorded).
+- **Consequences:** No automatic retry yet. Sandbox limits until a WhatsApp sender is approved.
+  Families who never sign in to the portal receive no messages (privacy by default).

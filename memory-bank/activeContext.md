@@ -12,7 +12,9 @@
   "Rama Cares", Trial; Verify service created). Owner's live SMS sign-in works (confirmed 2026-11-27).
 - Phase 1 done (ADR-010): all console data in Neon.
 - Phase 2 done (ADR-011): family portal at /family.
-- **Next:** notifications (staff alerts, family daily report); enquiry alerts with Rama-own accounts;
+- Notifications built (ADR-012). Waiting on owner: fill notification placeholders in `.env.local`
+  (Resend key, staff emails, WhatsApp sandbox sender, staff WhatsApp) → then copy to Vercel.
+- **Next:** enquiry alerts with Rama-own accounts;
   connect Hostinger domain to Vercel; Phase 2 Lovable removal when owner is ready.
 
 ## Assumptions

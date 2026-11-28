@@ -4,6 +4,8 @@ import { z } from "zod";
 import { enquirySchema } from "@/lib/enquiry";
 import { requireStaff } from "@/server/auth";
 import { query } from "@/server/db";
+import { enquiryAlert } from "@/lib/notify-messages";
+import { baseUrl, notifyStaff } from "@/server/notify";
 
 export const submitEnquiry = createServerFn({ method: "POST" })
   .validator(enquirySchema)
@@ -14,6 +16,7 @@ export const submitEnquiry = createServerFn({ method: "POST" })
        values ($1, $2, $3, $4, $5, $6)`,
       [data.name, data.age, data.condition, data.guardian, data.guardianPhone, data.serviceLine],
     );
+    await notifyStaff("enquiry_new", enquiryAlert(data, baseUrl()));
     return { ok: true as const };
   });
 

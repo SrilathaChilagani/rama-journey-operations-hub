@@ -6,7 +6,7 @@ import { JOURNEY, TIERS, nextNurseVisitDue, type Severity } from "@/lib/care-rul
 import { whatsappLink } from "@/lib/enquiry";
 import { SITE_CONFIG } from "@/lib/site-config";
 import {
-  familyConsent, familyMe, familyRaiseConcern, familyResend, familySignOut, familyStart, familyVerify, familyView,
+  familyConsent, familyMe, familyRaiseConcern, familyResend, familySetPrefs, familySignOut, familyStart, familyVerify, familyView,
   type FamilyLink, type FamilyView,
 } from "@/lib/api/family";
 
@@ -223,6 +223,7 @@ function Consent({ name, onAgree, onDecline }: { name: string; onAgree: () => Pr
         <div className="mt-4 space-y-3 text-sm leading-6 text-muted-foreground">
           <p>This portal shows health information about your family member: daily care notes, vital signs, medicines, incidents and their care team.</p>
           <p>Rama Cares shares it with you because our care team added you as their family contact. Please keep it private and don't share your sign-in code.</p>
+          <p>We'll also send you the daily care report and urgent updates on WhatsApp. You can switch these off in the portal.</p>
           <p>You can ask us to remove your access at any time.</p>
         </div>
         <div className="mt-6 flex flex-wrap gap-3">
@@ -322,6 +323,7 @@ function Portal({ links }: { links: FamilyLink[] }) {
         </div>
         <div className="space-y-10">
           <Concerns patientId={patientId} concerns={view.concerns} onRaised={load} />
+          <Prefs patientId={patientId} initial={view.prefs} />
           <div>
             <h2 className="text-xl font-semibold">Incidents</h2>
             <p className="mt-1 text-xs text-muted-foreground">Anything unusual, and how it's being handled. We call you straight away for anything urgent.</p>
@@ -424,6 +426,37 @@ function Concerns({ patientId, concerns, onRaised }: { patientId: string; concer
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+function Prefs({ patientId, initial }: { patientId: string; initial: FamilyView["prefs"] }) {
+  const [prefs, setPrefs] = useState(initial);
+  const [saved, setSaved] = useState(false);
+  const change = async (next: FamilyView["prefs"]) => {
+    const before = prefs;
+    setPrefs(next);
+    setSaved(false);
+    try {
+      await familySetPrefs({ data: { patientId, ...next } });
+      setSaved(true);
+    } catch {
+      setPrefs(before);
+    }
+  };
+  return (
+    <div>
+      <h2 className="text-xl font-semibold">WhatsApp updates</h2>
+      <p className="mt-1 text-xs text-muted-foreground">Sent to the number you sign in with.</p>
+      <div className="mt-4 space-y-3 rounded-lg border border-border bg-card p-4 text-sm">
+        <label className="flex items-center justify-between gap-3">Daily care report
+          <input type="checkbox" className="size-4 accent-[var(--primary)]" checked={prefs.daily} onChange={(e) => change({ ...prefs, daily: e.target.checked })} />
+        </label>
+        <label className="flex items-center justify-between gap-3">Incident alerts
+          <input type="checkbox" className="size-4 accent-[var(--primary)]" checked={prefs.incidents} onChange={(e) => change({ ...prefs, incidents: e.target.checked })} />
+        </label>
+        {saved && <p role="status" className="text-xs text-primary">Saved.</p>}
+      </div>
     </div>
   );
 }
