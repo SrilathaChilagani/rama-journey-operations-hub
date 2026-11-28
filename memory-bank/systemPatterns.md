@@ -71,3 +71,7 @@ typecheck `npx tsc --noEmit`.
 - Never store real patient data (names, phones, health info) in seed data or the memory bank.
 - **Env convention:** new keys get empty `NAME=` placeholders in `.env.local` (comment on its own
   line above, never trailing); the owner pastes values, then they're copied to Vercel env.
+- **Family portal (ADR-011):** `src/server/family-auth.ts` (phone→SMS→`rc_family` session; no
+  enumeration; per-number hourly limit), `src/lib/api/family.ts` (every read via
+  `requireFamilyAccess`), `src/routes/family.tsx` (`.patient-home` styling). Phones via
+  `src/lib/phone.ts` `normalizePhone`.

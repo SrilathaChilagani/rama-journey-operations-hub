@@ -57,6 +57,7 @@ SQL files in `db/migrations/`, applied with `bun run db:migrate`.
 | --- | --- | --- |
 | `/` | `src/routes/index.tsx` | Patient-facing home: hero photo, care promises, four service cards, standards, tier explainer, how-it-works, assessment form, footer |
 | `/services/$slug` | `src/routes/services.$slug.tsx` | Detail page per service: what's included, who is sent, nurse supervision, onboarding steps, FAQs, related services |
+| `/family` | `src/routes/family.tsx` | **Family portal** (homepage styling): guardian signs in with phone + SMS code; sees journey step, caregiver + backup, nurse schedule, daily reports, incident status; raises concerns |
 | `/enquiries` | `src/routes/enquiries.tsx` | Website assessment requests from the database; mark new / contacted / closed |
 | `/console` | `src/routes/console.tsx` | Staff overview: active patients, awaiting assessment, bench count, open incidents, nurse visits due |
 | `/patients` | `src/routes/patients.tsx` | Patient list + new enquiry form; journey step, tier, caregiver assignment (gated) |
@@ -86,6 +87,21 @@ keyboards) plus the Web OTP API on Android Chrome; a full code submits itself.
 Set/clear a number: `bun run staff:phone you@example.com +919876543210` (or `none`).
 Env: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID`
 (`TWILIO_VERIFY_BASE_URL` is a local-testing override, ignored in production).
+
+## Family portal (ADR-011)
+
+- Staff grant access per patient on `/patients` → **Family portal access** (name, relationship,
+  mobile; numbers normalised to E.164 by `src/lib/phone.ts`). Table `family_contacts`.
+- Families sign in at `/family` with that number + an SMS code (Twilio Verify, same subaccount
+  as staff). The "code sent" response is identical for unregistered numbers, which get no SMS
+  and can never pass; max 5 code requests per number per hour; 5 code tries; 30-day
+  `rc_family` session. First sign-in shows a consent notice (DPDP), stored as `consent_at`.
+- Every portal read goes through `requireFamilyAccess(patientId)` (`src/server/family-auth.ts`),
+  re-checked per request, so removing a contact ends access immediately. Families never see
+  incident descriptions (staff notes) or other patients.
+- Concerns raised in the portal become `complaints` rows with `raised_by_contact`, shown to
+  staff tagged "from family" and run on the SOP's 2 h / 48 h deadlines.
+- Server functions: `src/lib/api/family.ts`. Footer link "Family portal" on the homepage.
 
 ## Business settings
 
@@ -176,8 +192,8 @@ the tests assert ten distinct entries and the weekly schedule.
 
 ## Open items
 
-1. **Family portal (Phase 2)** — `/family`, guardian phone + SMS code, patient's daily logs,
-   care plan, nurse visits, raise a concern; homepage styling.
+1. **Notifications** — alert staff to new enquiries/family concerns, and send families their
+   daily report by SMS/WhatsApp (Rama Cares Twilio subaccount).
 2. **Caregiver search + booking** — a "find care by area/PIN with a map" flow was built and
    then explicitly rolled back at the owner's request (`3a7957f`); it is not in the app. Any
    future version must still respect the assessment gate: searching is fine, confirming a

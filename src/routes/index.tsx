@@ -126,7 +126,7 @@ function Home() {
         <Enquiry />
       </main>
 
-      <footer className="border-t border-border"><div className="home-container flex flex-wrap items-center justify-between gap-6 py-8"><div><p className="text-xl font-semibold">rama<span className="font-normal text-primary">cares</span></p><p className="mt-2 text-xs text-muted-foreground">Nurse-led home care · Hyderabad</p></div><div className="flex flex-wrap gap-6 text-xs text-muted-foreground"><a href="#services" className="hover:text-primary">Our services</a><a href="#enquire" className="hover:text-primary">Get in touch</a></div></div></footer>
+      <footer className="border-t border-border"><div className="home-container flex flex-wrap items-center justify-between gap-6 py-8"><div><p className="text-xl font-semibold">rama<span className="font-normal text-primary">cares</span></p><p className="mt-2 text-xs text-muted-foreground">Nurse-led home care · Hyderabad</p></div><div className="flex flex-wrap gap-6 text-xs text-muted-foreground"><a href="#services" className="hover:text-primary">Our services</a><a href="#enquire" className="hover:text-primary">Get in touch</a><Link to="/family" className="hover:text-primary">Family portal</Link></div></div></footer>
     </div>
   );
 }

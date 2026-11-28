@@ -75,7 +75,7 @@ function Incidents() {
                 run(() => setComplaintState({ data: { id: k.id, field, value } }));
               return (
                 <li key={k.id} className="py-3 text-sm">
-                  <p>{name(k.patientId)}: {k.text}</p>
+                  <p>{name(k.patientId)}: {k.text}{k.raisedBy && <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">from family · {k.raisedBy}</span>}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Received {when(k.at)} · <span className={ackLate ? "font-medium text-destructive" : ""}>Ack by {when(dl.acknowledgeBy.toISOString())}</span> · <span className={resolveLate ? "font-medium text-destructive" : ""}>Resolve by {when(dl.resolveBy.toISOString())}</span>
                   </p>

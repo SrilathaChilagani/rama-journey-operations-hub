@@ -39,7 +39,8 @@ Unknown slug → `notFound()`.
 | Journey (8 steps) | Enquiry → Home assessment → Care plan & quote → Match & introduce → Care starts → 48-hour review → Ongoing care → Closure |
 
 ## Roles
-- Families / patients (public site, no login; family portal planned).
+- Families / patients: public site (no login) + **family portal** `/family` (phone + SMS code,
+  access granted per patient by staff, consent recorded).
 - Staff: Care Manager, nurses, caregivers by cadre (Care Companion, Certified Caregiver,
   Senior Caregiver, Registered Nurse). Console needs staff sign-in (password + SMS code for staff
   with a phone on file).

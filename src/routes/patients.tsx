@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppShell, Badge, Card, btnCls, head, inputCls } from "@/components/rc/AppShell";
 import { JOURNEY, TIERS, advanceBlockReason, cadreQualifies, canAssignCaregiver, type Tier } from "@/lib/care-rules";
-import { addPatient, advancePatient, assignCaregiver, logNurseVisit, setPatientTier } from "@/lib/api/console";
+import { addFamilyContact, addPatient, advancePatient, assignCaregiver, logNurseVisit, removeFamilyContact, setPatientTier } from "@/lib/api/console";
 import { SERVICE_LINES } from "@/lib/enquiry";
 import { type Patient, fmt, run, useStore } from "@/lib/store";
 
@@ -100,6 +100,50 @@ function PatientCard({ p }: { p: Patient }) {
       {p.journeyStep >= 2 && !assignable && <p className="mt-3 text-xs text-muted-foreground">Complete the home assessment and set a tier to unlock caregiver assignment.</p>}
       {blocked && p.journeyStep < 8 && assignable && <p className="mt-3 text-xs text-muted-foreground">{blocked}</p>}
       {p.tier && <p className="mt-2 text-xs text-muted-foreground">Supervision: {TIERS[p.tier].supervision}. Staff grade: {TIERS[p.tier].staff}.{p.careStart && ` Care started ${fmt(p.careStart)}.`}{p.lastNurseVisit && ` Last nurse visit ${fmt(p.lastNurseVisit)}.`}</p>}
+      <FamilyAccess p={p} />
     </Card>
+  );
+}
+
+// Who can sign in to the family portal (/family) for this patient, by mobile number + SMS code.
+function FamilyAccess({ p }: { p: Patient }) {
+  const s = useStore()!;
+  const contacts = s.familyContacts.filter((f) => f.patientId === p.id);
+  const [open, setOpen] = useState(false);
+  const [f, setF] = useState({ name: p.guardian, relationship: "", phone: p.guardianPhone });
+  const add = async () => {
+    if (await run(() => addFamilyContact({ data: { patientId: p.id, ...f } }))) {
+      setF({ name: "", relationship: "", phone: "" });
+      setOpen(false);
+    }
+  };
+  return (
+    <div className="mt-4 border-t border-border pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h4 className="text-sm font-medium">Family portal access</h4>
+        {!open && <button className="text-xs text-primary underline" onClick={() => setOpen(true)}>Add family member</button>}
+      </div>
+      {contacts.length === 0 && !open && <p className="mt-1 text-xs text-muted-foreground">No one can see this patient in the family portal yet.</p>}
+      <ul className="mt-2 space-y-1">
+        {contacts.map((c) => (
+          <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+            <span>{c.name}{c.relationship && ` (${c.relationship})`} · {c.phone} · <span className="text-xs text-muted-foreground">{c.consentAt ? `signed in, consented ${fmt(c.consentAt)}` : "not signed in yet"}</span></span>
+            <button className="text-xs text-muted-foreground underline" onClick={() => run(() => removeFamilyContact({ data: { id: c.id } }))}>Remove access</button>
+          </li>
+        ))}
+      </ul>
+      {open && (
+        <div className="mt-3 grid gap-2 md:grid-cols-4">
+          <input className={inputCls} placeholder="Name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
+          <input className={inputCls} placeholder="Relationship (e.g. Son)" value={f.relationship} onChange={(e) => setF({ ...f, relationship: e.target.value })} />
+          <input className={inputCls} placeholder="Mobile, e.g. +1 408 555 0142" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
+          <div className="flex gap-2">
+            <button className={btnCls} disabled={!f.name.trim() || !f.phone.trim()} onClick={add}>Give access</button>
+            <button className="text-xs text-muted-foreground underline" onClick={() => setOpen(false)}>Cancel</button>
+          </div>
+          <p className="text-xs text-muted-foreground md:col-span-4">They sign in at /family with this number and an SMS code. They see this patient's care team, daily reports, nurse visits and incident status, and can raise a concern.</p>
+        </div>
+      )}
+    </div>
   );
 }

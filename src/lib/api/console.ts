@@ -4,6 +4,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { advanceBlockReason, assignmentBlockReason, cadreQualifies, type Cadre, type Tier } from "@/lib/care-rules";
 import { SERVICE_LINES } from "@/lib/enquiry";
+import { normalizePhone } from "@/lib/phone";
 import type { ConsoleState } from "@/lib/store";
 import { requireStaff } from "@/server/auth";
 import { query } from "@/server/db";
@@ -25,11 +26,12 @@ type PatientFull = {
 };
 type ShiftRow = { id: string; patient_id: string; caregiver_id: string | null; logged_at: Ts; bp: string; spo2: string; meals: string; meds: string; mood: string; notes: string };
 type IncidentRow = { id: string; patient_id: string; severity: "Red" | "Amber" | "Green"; kind: string; description: string; occurred_at: Ts; resolved_at: Ts };
-type ComplaintRow = { id: string; patient_id: string; text: string; received_at: Ts; acknowledged_at: Ts; resolved_at: Ts };
+type ComplaintRow = { id: string; patient_id: string; text: string; received_at: Ts; acknowledged_at: Ts; resolved_at: Ts; raised_by: string | null };
+type ContactRow = { id: string; patient_id: string; name: string; relationship: string; phone: string; consent_at: Ts };
 
 export const getConsole = createServerFn({ method: "GET" }).handler(async (): Promise<ConsoleState> => {
   await requireStaff();
-  const [caregivers, patients, shifts, incidents, complaints] = await Promise.all([
+  const [caregivers, patients, shifts, incidents, complaints, contacts] = await Promise.all([
     query<CaregiverRow>(`select id, name, cadre, languages, status from caregivers order by created_at`),
     query<PatientFull>(
       `select id, name, age, condition, guardian_name, guardian_phone, service_line, journey_step, tier,
@@ -45,8 +47,12 @@ export const getConsole = createServerFn({ method: "GET" }).handler(async (): Pr
          from incidents order by occurred_at desc limit 300`,
     ),
     query<ComplaintRow>(
-      `select id, patient_id, text, received_at, acknowledged_at, resolved_at
-         from complaints order by received_at desc limit 300`,
+      `select k.id, k.patient_id, k.text, k.received_at, k.acknowledged_at, k.resolved_at, f.name as raised_by
+         from complaints k left join family_contacts f on f.id = k.raised_by_contact
+        order by k.received_at desc limit 300`,
+    ),
+    query<ContactRow>(
+      `select id, patient_id, name, relationship, phone, consent_at from family_contacts where active order by created_at`,
     ),
   ]);
   return {
@@ -68,7 +74,11 @@ export const getConsole = createServerFn({ method: "GET" }).handler(async (): Pr
     complaints: complaints.map((k) => ({
       id: k.id, patientId: k.patient_id, text: k.text, at: iso(k.received_at)!,
       acknowledged: k.acknowledged_at != null, resolved: k.resolved_at != null,
-      acknowledgedAt: iso(k.acknowledged_at), resolvedAt: iso(k.resolved_at),
+      acknowledgedAt: iso(k.acknowledged_at), resolvedAt: iso(k.resolved_at), raisedBy: k.raised_by,
+    })),
+    familyContacts: contacts.map((f) => ({
+      id: f.id, patientId: f.patient_id, name: f.name, relationship: f.relationship, phone: f.phone,
+      consentAt: iso(f.consent_at),
     })),
   };
 });
@@ -238,4 +248,27 @@ export const setComplaintState = createServerFn({ method: "POST" })
     const column = data.field === "acknowledged" ? "acknowledged_at" : "resolved_at";
     await query(`update complaints set ${column} = case when $2 then coalesce(${column}, now()) else null end where id = $1`,
       [data.id, data.value]);
+  });
+
+// ---- Family portal access ----
+export const addFamilyContact = createServerFn({ method: "POST" })
+  .validator(z.object({ patientId: id, name: text(100).min(1), relationship: text(50), phone: text(30).min(6) }))
+  .handler(async ({ data }) => {
+    const staff = await requireStaff();
+    await loadPatient(data.patientId);
+    const phone = normalizePhone(data.phone);
+    if (!phone) throw new Error("Enter the mobile number with its country code, e.g. +1 408 555 0142 (Indian numbers can skip +91).");
+    await query(
+      `insert into family_contacts (patient_id, name, relationship, phone, created_by) values ($1, $2, $3, $4, $5)
+       on conflict (patient_id, phone) do update set name = excluded.name, relationship = excluded.relationship, active = true`,
+      [data.patientId, data.name, data.relationship, phone, staff.id],
+    );
+  });
+
+export const removeFamilyContact = createServerFn({ method: "POST" })
+  .validator(z.object({ id }))
+  .handler(async ({ data }) => {
+    await requireStaff();
+    // Kept (inactive) so concerns they raised stay attributed; access ends on their next request.
+    await query(`update family_contacts set active = false where id = $1`, [data.id]);
   });

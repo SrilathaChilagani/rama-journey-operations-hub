@@ -16,9 +16,10 @@ export type ShiftLog = { id: string; patientId: string; caregiverId: string; dat
 export type Incident = { id: string; patientId: string; severity: Severity; kind: string; description: string; at: string; resolved: boolean };
 export type Complaint = {
   id: string; patientId: string; text: string; at: string; acknowledged: boolean; resolved: boolean;
-  acknowledgedAt: string | null; resolvedAt: string | null;
+  acknowledgedAt: string | null; resolvedAt: string | null; raisedBy: string | null;
 };
-export type ConsoleState = { patients: Patient[]; caregivers: Caregiver[]; shifts: ShiftLog[]; incidents: Incident[]; complaints: Complaint[] };
+export type FamilyContact = { id: string; patientId: string; name: string; relationship: string; phone: string; consentAt: string | null };
+export type ConsoleState = { patients: Patient[]; caregivers: Caregiver[]; shifts: ShiftLog[]; incidents: Incident[]; complaints: Complaint[]; familyContacts: FamilyContact[] };
 /** @deprecated name kept for older imports */
 export type State = ConsoleState;
 

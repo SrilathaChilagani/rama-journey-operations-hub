@@ -143,3 +143,18 @@
   UI-only checks (bypassable).
 - **Consequences:** One fetch loads all console data (fine at current scale; paginate later).
   Old localStorage demo data is ignored.
+
+## ADR-011: Family portal — phone + SMS code, staff-granted access per patient
+- **Date:** 2026-11-27
+- **Status:** Accepted
+- **Context:** The SOP promises families daily reports and visibility "wherever in the world".
+  Guardians are often abroad; passwords would be a support burden.
+- **Decision:** `/family` with passwordless phone + Twilio Verify SMS code. Staff add
+  `family_contacts` per patient (E.164). Identical response for unregistered numbers (no SMS,
+  can't pass), 5 requests/number/hour, 30-day session, DPDP consent on first sign-in. Access is
+  re-derived from `family_contacts` on every request. Families see journey, care team, nurse
+  schedule, logs, incident kind/status (not staff descriptions); concerns feed `complaints`.
+- **Alternatives considered:** magic links by email (many guardians WhatsApp-first); passwords;
+  showing full incident notes (internal language, may alarm without context).
+- **Consequences:** International SMS cost per sign-in (30-day session limits it). Twilio trial
+  can only text verified numbers. Staff must keep family contacts current.
