@@ -3,7 +3,7 @@
 > Source of truth for project status and the log of every change the user requests.
 > Update at the end of every session. Newest dated section at the bottom of "Done".
 
-Last updated: 2026-11-27 — Claude Code (enquiries + staff logins on Neon; telemed separation)
+Last updated: 2026-11-28 — Claude Code (privacy page, Sentry, Staff logins page, enquiry spam limits)
 
 ## ✅ Done / Working
 ### 2026-11-23
@@ -69,16 +69,33 @@ Last updated: 2026-11-27 — Claude Code (enquiries + staff logins on Neon; tele
   mentions WhatsApp. 32 tests pass. E2E vs fake Twilio+Resend passed (staff alerts WA+email,
   daily report only to consented + opted-in, failed send logged with reason, Green → none,
   Amber → opted-in families, no staff notes, concern alert, pref saved). Test data deleted.
-  Env placeholders added to `.env.local` (empty → sends are logged as "skipped").
+  Env placeholders added to `.env.local` (empty → no recipients, nothing sent or logged).
+
+### 2026-11-28
+- **Privacy policy** `/privacy` (DPDP: collection, purposes, consent, sharing/processors,
+  storage outside India, retention, rights, grievance, cookies). Linked from footer, enquiry form
+  and family consent screen. Business/grievance contacts are `[TO SET]` in `site-config.ts`.
+- **Sentry error alerts (ADR-013):** dependency-free reporter, browser + server + server-function
+  middleware; `Refusal` class for expected errors (not reported). Needs `VITE_SENTRY_DSN`.
+- **Staff logins page** `/staff` (admins only): add, edit name/mobile/role, turn off/on, reset
+  password (signs them out everywhere); can't lock yourself out.
+- **Enquiry spam limits:** migration 006 (`ip_hash`, `phone_key`, `alerted`); 3/phone/day (first
+  alerts staff), 5/IP/hour, staff alerts capped 20/hour; friendly messages on the form.
+- Bug found by e2e and fixed: a NUL character in any form crashed the save → `query()` strips it.
+- 49 unit tests pass; 11-step browser e2e (fake Sentry) passed; build + typecheck clean; no server
+  code in client bundle. Test data deleted.
 
 ## 🐞 Known Issues / Limitations
 - Twilio subaccount (renamed Ourspace → "Rama Cares") is a **Trial**: SMS only to numbers verified in
   that subaccount (none yet). Upgrade before staff go live. Owner's number verified (trial) and on file → owner now needs SMS code.
 - Twilio trial: family portal codes only reach numbers verified in the Rama Cares subaccount.
-- Notification env vars empty → messages logged as "skipped" until owner fills them.
+- Notification env vars empty → no recipients, so nothing is sent or logged until owner fills them.
 - No automatic retry for failed notifications.
 - WhatsApp number in `site-config.ts` empty → WhatsApp button hidden.
-- No rate limit on the public form beyond the honeypot.
+- `VITE_SENTRY_DSN` empty → no error alerts until owner creates the Rama Cares Sentry project.
+- Privacy policy contact/grievance details and legal name `[TO SET]`; policy text should get a
+  lawyer's review before launch.
+- Sentry reporter has no breadcrumbs/source maps (ADR-013).
 - Existing Lovable code doesn't pass `prettier/prettier` lint (pre-existing).
 - Complaint/status checkboxes update after the server confirms (~0.5 s), not instantly.
 - All console data loads in one request — fine now, paginate when records grow.
@@ -86,8 +103,9 @@ Last updated: 2026-11-27 — Claude Code (enquiries + staff logins on Neon; tele
   as `env -u VERCEL_TOKEN vercel …` (or remove it from the profile).
 
 ## 📋 Next Up (open items from README)
-1. **Messaging go-live** — Resend key/domain, Twilio upgrade, WhatsApp sender + templates.
-1b. **Enquiry alerts** — with Rama Cares' own email/WhatsApp (not telemed-in's).
+1. **Messaging go-live** — Resend key/domain, Twilio upgrade, WhatsApp sender (separate Meta
+   business portfolio "Rama Cares" via Twilio self sign-up) + templates.
+1b. **Owner config** — `VITE_SENTRY_DSN`; privacy contact fields in `site-config.ts`.
 2. **Caregiver search + booking** — only if owner asks again; must respect assessment gate.
 3. **Prices and pay** — still `[TO SET]`.
 4. **Contact details** — phone/email/address not final.
@@ -115,3 +133,4 @@ Last updated: 2026-11-27 — Claude Code (enquiries + staff logins on Neon; tele
 | 2026-11-27 | Phase 1: move console data (patients, caregivers, care logs, incidents, complaints) from browser storage to the Neon DB | Done | ADR-010, `db/migrations/003…`, `src/lib/api/console.ts` |
 | 2026-11-27 | Phase 2: family portal at /family — guardian phone + SMS code, daily reports, care plan, nurse visits, raise a concern; homepage styling | Done | ADR-011, `db/migrations/004…`, `src/routes/family.tsx` |
 | 2026-11-27 | Notifications: WhatsApp + email — new enquiry & family concern → staff; Red/Amber incident & daily report → family | Done — awaiting owner's Resend key + WhatsApp sandbox setup | ADR-012, `db/migrations/005…`, `src/server/notify.ts` |
+| 2026-11-28 | Privacy policy page, Sentry error alerts, Staff page (add/disable/reset logins), spam limits on enquiry form | Done — awaiting owner's Sentry DSN + privacy contact details | ADR-013, `db/migrations/006…`, `src/routes/privacy.tsx`, `src/routes/staff.tsx`, `src/lib/sentry.ts` |

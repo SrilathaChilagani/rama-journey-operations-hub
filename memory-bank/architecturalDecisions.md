@@ -174,3 +174,20 @@
   cron retries (more moving parts; can add later — failed rows are already recorded).
 - **Consequences:** No automatic retry yet. Sandbox limits until a WhatsApp sender is approved.
   Families who never sign in to the portal receive no messages (privacy by default).
+
+## ADR-013: Error alerts via Sentry without the SDK; `Refusal` for expected errors
+- **Date:** 2026-11-28
+- **Status:** Accepted
+- **Context:** Nobody was told when the live site broke. Owner already uses Sentry. Server
+  functions throw for both real faults and deliberate refusals (not signed in, SOP rules), so a
+  naive hook would email the owner about every refused action.
+- **Decision:** A ~100-line reporter (`src/lib/sentry.ts`) posts Sentry envelopes with `fetch`
+  from both browser (window error/unhandledrejection, root error boundary) and server (request
+  middleware, a global server-function middleware in `src/start.ts`, `server.ts`, notification
+  failures). One DSN, `VITE_SENTRY_DSN`, in a separate "Rama Cares" Sentry project. Expected
+  refusals throw `Refusal` (`src/lib/errors.ts`) and are skipped. Phones/emails are masked; no
+  request bodies, cookies or form data are sent. Max 10 events/min, same fault once per minute.
+- **Alternatives considered:** `@sentry/tanstackstart-react` / `@sentry/node` (heavier, needs
+  build-plugin changes inside the Lovable vite config, OpenTelemetry bundling risk on Vercel).
+- **Consequences:** No breadcrumbs, performance tracing or source-map upload — stack frames point
+  at built files. Revisit with the official SDK after the Phase 2 Lovable removal.

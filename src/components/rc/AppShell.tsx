@@ -4,7 +4,8 @@ import { clearConsole, dismissError, loadConsole, useConsoleStatus } from "@/lib
 import { getConsole } from "@/lib/api/console";
 import { getStaff, staffLogin, staffLogout, staffResendCode, staffVerifyCode } from "@/lib/api/staff";
 
-type StaffInfo = { name: string; email: string };
+type StaffInfo = { id: string; name: string; email: string; role: "admin" | "staff" };
+export const useSignedInStaff = () => useContext(StaffContext);
 const StaffContext = createContext<StaffInfo | null>(null);
 
 const LOGIN_ERRORS = {
@@ -199,7 +200,23 @@ const NAV = [
   { to: "/shifts", label: "Daily care log" },
   { to: "/incidents", label: "Incidents & complaints" },
   { to: "/notifications", label: "Notifications" },
+  { to: "/staff", label: "Staff logins", adminOnly: true },
 ] as const;
+
+function Nav() {
+  const staff = useContext(StaffContext);
+  return (
+    <nav className="mt-6 flex flex-wrap gap-1 md:flex-col">
+      {NAV.filter((n) => !("adminOnly" in n) || staff?.role === "admin").map((n) => (
+        <Link key={n.to} to={n.to} activeOptions={{ exact: true }}
+          className="rounded-md px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent"
+          activeProps={{ className: "bg-primary text-primary-foreground hover:bg-primary" }}>
+          {n.label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
 
 export function AppShell({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
   return (
@@ -208,15 +225,7 @@ export function AppShell({ title, subtitle, children }: { title: string; subtitl
       <aside className="border-b border-border bg-sidebar p-5 md:min-h-screen md:border-b-0 md:border-r">
         <Link to="/console" className="block font-display text-2xl text-primary">Rama Cares</Link>
         <p className="mt-1 text-xs text-muted-foreground">Clinically supervised home care</p>
-        <nav className="mt-6 flex flex-wrap gap-1 md:flex-col">
-          {NAV.map((n) => (
-            <Link key={n.to} to={n.to} activeOptions={{ exact: true }}
-              className="rounded-md px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent"
-              activeProps={{ className: "bg-primary text-primary-foreground hover:bg-primary" }}>
-              {n.label}
-            </Link>
-          ))}
-        </nav>
+        <Nav />
         <Link to="/" className="mt-8 block text-xs text-muted-foreground underline">← Patient website</Link>
         <SignedInAs />
       </aside>

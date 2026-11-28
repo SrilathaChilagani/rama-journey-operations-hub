@@ -74,8 +74,14 @@ The staff console is **not linked** from the public site and its pages send `noi
 scrypt-hashed in `staff_users`; a successful login sets an httpOnly `rc_staff` cookie whose
 SHA-256 is stored in `staff_sessions` (30 days). 5 wrong passwords lock the account for 15 min.
 Every staff server function calls `requireStaff()`. Page content mounts only after sign-in, so
-data fetches never run unauthenticated. Create or reset a login (password typed at a hidden
+data fetches never run unauthenticated. Admins manage logins on the **Staff logins** page
+(`/staff`): add, edit, turn off/on, reset passwords. From the terminal (password typed at a hidden
 prompt): `bun run staff:create you@example.com "Full Name" admin`.
+
+**Privacy & errors.** `/privacy` is the DPDP privacy policy (contact fields in
+`src/lib/site-config.ts`). Faults are reported to Sentry when `VITE_SENTRY_DSN` is set; expected
+refusals throw `Refusal` (`src/lib/errors.ts`) and are not reported (ADR-013). The enquiry form is
+rate-limited per phone and per connection (`enquiryDecision` in `src/lib/enquiry.ts`).
 
 **SMS sign-in code (ADR-009).** Staff with a mobile number on file must also enter a 6-digit
 code sent by **Twilio Verify** (Rama Cares' own Twilio subaccount). Twilio creates and checks the

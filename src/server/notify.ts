@@ -6,6 +6,7 @@
 // Optional, once Meta approves templates: TWILIO_WA_TEMPLATE_<KIND> = Content SID (HX…) — the
 // message body is then passed as template variable {{1}}.
 import type { Message } from "@/lib/notify-messages";
+import { reportError } from "@/lib/sentry";
 import { query } from "./db";
 
 export type Kind = "enquiry_new" | "concern_new" | "incident_family" | "daily_report";
@@ -99,6 +100,7 @@ async function safely(fn: () => Promise<void>) {
     await fn();
   } catch (e) {
     console.error("notification error", e);
+    await reportError(e, { side: "server", path: "notifications" });
   }
 }
 

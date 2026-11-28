@@ -126,20 +126,23 @@ function Home() {
         <Enquiry />
       </main>
 
-      <footer className="border-t border-border"><div className="home-container flex flex-wrap items-center justify-between gap-6 py-8"><div><p className="text-xl font-semibold">rama<span className="font-normal text-primary">cares</span></p><p className="mt-2 text-xs text-muted-foreground">Nurse-led home care · Hyderabad</p></div><div className="flex flex-wrap gap-6 text-xs text-muted-foreground"><a href="#services" className="hover:text-primary">Our services</a><a href="#enquire" className="hover:text-primary">Get in touch</a><Link to="/family" className="hover:text-primary">Family portal</Link></div></div></footer>
+      <footer className="border-t border-border"><div className="home-container flex flex-wrap items-center justify-between gap-6 py-8"><div><p className="text-xl font-semibold">rama<span className="font-normal text-primary">cares</span></p><p className="mt-2 text-xs text-muted-foreground">Nurse-led home care · Hyderabad</p></div><div className="flex flex-wrap gap-6 text-xs text-muted-foreground"><a href="#services" className="hover:text-primary">Our services</a><a href="#enquire" className="hover:text-primary">Get in touch</a><Link to="/family" className="hover:text-primary">Family portal</Link><Link to="/privacy" className="hover:text-primary">Privacy</Link></div></div></footer>
     </div>
   );
 }
 
 function Enquiry() {
   const [f, setF] = useState<EnquiryInput>({ name: "", age: "", condition: "", guardian: "", guardianPhone: "", serviceLine: "Post-hospitalisation", website: "" });
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error" | "too-many">("idle");
+  const [repeat, setRepeat] = useState(false);
   const wa = whatsappLink(SITE_CONFIG.whatsappNumber, formatEnquiry(f));
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setStatus("sending");
     try {
-      await submitEnquiry({ data: f });
+      const res = await submitEnquiry({ data: f });
+      if (!res.ok) return setStatus("too-many");
+      setRepeat(!!res.repeat);
       setStatus("sent");
     } catch {
       setStatus("error");
@@ -151,7 +154,7 @@ function Enquiry() {
   return (
     <section id="enquire" className="home-container grid gap-10 py-16 md:py-20 lg:grid-cols-2 lg:gap-20">
       <div><p className="home-eyebrow">Let's find the right care</p><h2 className="home-heading mt-3">Your family.<br />Our full attention.</h2><p className="mt-5 max-w-sm text-sm leading-7 text-muted-foreground">Tell us a little about your parent. A care advisor will call you back, and a nurse will assess within 24 hours.</p><div className="mt-7 flex items-center gap-2 text-xs text-primary"><ShieldCheck className="size-4" /> Every care journey begins with a nurse assessment.</div></div>
-      {status === "sent" ? <div role="status" className="flex flex-col justify-center border-t border-primary pt-8"><CheckCircle2 className="size-10 text-primary" strokeWidth={1.5} /><h3 className="mt-5 text-2xl font-semibold">Thank you.</h3><p className="mt-2 text-sm text-muted-foreground">We've received your request and will call you shortly. For a faster reply, send us the same details on WhatsApp.</p>{waButton}</div> : <form className="grid gap-x-4 gap-y-5 sm:grid-cols-2" onSubmit={submit}>
+      {status === "sent" ? <div role="status" className="flex flex-col justify-center border-t border-primary pt-8"><CheckCircle2 className="size-10 text-primary" strokeWidth={1.5} /><h3 className="mt-5 text-2xl font-semibold">Thank you.</h3><p className="mt-2 text-sm text-muted-foreground">{repeat ? "We already have your earlier request and will call you shortly — no need to send it again." : "We've received your request and will call you shortly."}{wa ? " For a faster reply, send us the same details on WhatsApp." : ""}</p>{waButton}</div> : <form className="grid gap-x-4 gap-y-5 sm:grid-cols-2" onSubmit={submit}>
         <label className={label}>Patient's name<input required autoComplete="name" className={field} placeholder="Full name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></label>
         <label className={label}>Age<input className={field} inputMode="numeric" placeholder="Patient's age" value={f.age} onChange={(e) => setF({ ...f, age: e.target.value })} /></label>
         <label className={`${label} sm:col-span-2`}>Care needs<input className={field} placeholder="Condition, hospital and discharge date" value={f.condition} onChange={(e) => setF({ ...f, condition: e.target.value })} /></label>
@@ -160,6 +163,8 @@ function Enquiry() {
         <label className={`${label} sm:col-span-2`}>Service<select className={field} value={f.serviceLine} onChange={(e) => setF({ ...f, serviceLine: e.target.value as EnquiryInput["serviceLine"] })}><option>Post-hospitalisation</option><option>Elderly care</option><option>Rehabilitation</option></select></label>
         <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" value={f.website} onChange={(e) => setF({ ...f, website: e.target.value })} />
         <Button type="submit" disabled={status === "sending"} className="mt-1 h-12 rounded-full px-6 sm:col-span-2 sm:justify-self-start">{status === "sending" ? "Sending…" : <>Request assessment <ArrowRight /></>}</Button>
+        <p className="text-xs leading-5 text-muted-foreground sm:col-span-2">We use these details only to arrange care for your family. See our <Link to="/privacy" className="underline hover:text-primary">privacy policy</Link>.</p>
+        {status === "too-many" && <div role="alert" className="flex flex-col text-sm text-destructive sm:col-span-2"><p>We've received several requests from this connection in the last hour. Please try again a little later{wa ? ", or send it to us on WhatsApp" : ""}.</p>{waButton}</div>}
         {status === "error" && <div role="alert" className="flex flex-col text-sm text-destructive sm:col-span-2"><p>We couldn't send your request just now. Please check your details and try again{wa ? ", or send it to us on WhatsApp" : ""}.</p>{waButton}</div>}
       </form>}
     </section>

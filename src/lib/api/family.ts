@@ -1,6 +1,7 @@
 // Server functions for the family portal. Every data read is scoped on the server to patients
 // the signed-in family member is linked to — a patient id from the browser is only a choice
 // among those, never trusted on its own.
+import { Refusal } from "@/lib/errors";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { Cadre, Severity, Tier } from "@/lib/care-rules";
@@ -68,7 +69,7 @@ export const familyView = createServerFn({ method: "GET" })
     const [p] = await query<P>(
       `select name, age, service_line, journey_step, tier, care_start, last_nurse_visit, caregiver_id, backup_id
          from patients where id = $1`, [data.patientId]);
-    if (!p) throw new Error("Not signed in");
+    if (!p) throw new Refusal("Not signed in");
     const team = await query<{ id: string; name: string; cadre: Cadre; languages: string }>(
       `select id, name, cadre, languages from caregivers where id = any($1::uuid[])`,
       [[p.caregiver_id, p.backup_id].filter(Boolean)]);

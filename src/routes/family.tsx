@@ -224,7 +224,7 @@ function Consent({ name, onAgree, onDecline }: { name: string; onAgree: () => Pr
           <p>This portal shows health information about your family member: daily care notes, vital signs, medicines, incidents and their care team.</p>
           <p>Rama Cares shares it with you because our care team added you as their family contact. Please keep it private and don't share your sign-in code.</p>
           <p>We'll also send you the daily care report and urgent updates on WhatsApp. You can switch these off in the portal.</p>
-          <p>You can ask us to remove your access at any time.</p>
+          <p>You can ask us to remove your access at any time. Read how we handle this information in our <Link to="/privacy" className="underline hover:text-primary">privacy policy</Link>.</p>
         </div>
         <div className="mt-6 flex flex-wrap gap-3">
           <Button className="h-11 rounded-full px-6" disabled={busy} onClick={async () => { setBusy(true); await onAgree().finally(() => setBusy(false)); }}>I understand — continue</Button>

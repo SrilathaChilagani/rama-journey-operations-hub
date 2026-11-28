@@ -2,6 +2,7 @@
 // a 6-digit SMS code from Twilio Verify, unless this device was trusted in the last 30 days.
 // Every token (session, pending challenge, trusted device) is random, kept in an httpOnly
 // cookie, and stored only as a SHA-256 in the database.
+import { Refusal } from "@/lib/errors";
 import { createHash, randomBytes } from "node:crypto";
 import { deleteCookie, getCookie, setCookie } from "@tanstack/react-start/server";
 import { query } from "./db";
@@ -61,7 +62,7 @@ export async function currentStaff(): Promise<Staff | null> {
 
 export async function requireStaff(): Promise<Staff> {
   const staff = await currentStaff();
-  if (!staff) throw new Error("Not signed in");
+  if (!staff) throw new Refusal("Not signed in");
   return staff;
 }
 

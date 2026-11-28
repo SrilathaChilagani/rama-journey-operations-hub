@@ -13,6 +13,9 @@ export function sql() {
   return client;
 }
 
+// Postgres text can't hold the NUL character; a pasted one would otherwise crash the save.
+export const cleanParam = (v: unknown) => (typeof v === "string" ? v.replace(/\u0000/g, "") : v);
+
 export async function query<T>(text: string, params: unknown[] = []): Promise<T[]> {
-  return (await sql().query(text, params)) as T[];
+  return (await sql().query(text, params.map(cleanParam))) as T[];
 }

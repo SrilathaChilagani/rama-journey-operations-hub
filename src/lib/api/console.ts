@@ -1,5 +1,6 @@
 // Server functions for the staff console. Every one requires a signed-in staff session and
 // re-checks SOP rules on the server — the browser's checks are only for a friendly UI.
+import { Refusal } from "@/lib/errors";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { advanceBlockReason, assignmentBlockReason, cadreQualifies, type Cadre, type Tier } from "@/lib/care-rules";
@@ -107,7 +108,7 @@ type PatientRow = { id: string; journey_step: number; tier: Tier | null; caregiv
 async function loadPatient(patientId: string) {
   const [p] = await query<PatientRow>(
     `select id, journey_step, tier, caregiver_id, care_start from patients where id = $1`, [patientId]);
-  if (!p) throw new Error("That patient no longer exists. Refresh the page.");
+  if (!p) throw new Refusal("That patient no longer exists. Refresh the page.");
   return { ...p, rule: { journeyStep: p.journey_step, tier: p.tier, caregiverId: p.caregiver_id } };
 }
 
@@ -134,7 +135,7 @@ export const setPatientTier = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireStaff();
     const p = await loadPatient(data.id);
-    if (p.journey_step < 2) throw new Error("The tier is set by a nurse at the home assessment (step 2).");
+    if (p.journey_step < 2) throw new Refusal("The tier is set by a nurse at the home assessment (step 2).");
     // A tier change can make the current placement unqualified — drop anyone who no longer fits
     // (rule from care-rules.ts, not re-stated here).
     const placed = await query<{ id: string; cadre: Cadre }>(
@@ -162,9 +163,9 @@ export const assignCaregiver = createServerFn({ method: "POST" })
     const column = data.role === "caregiver" ? "caregiver_id" : "backup_id";
     if (data.caregiverId) {
       const [c] = await query<{ id: string; cadre: Cadre }>(`select id, cadre from caregivers where id = $1`, [data.caregiverId]);
-      if (!c) throw new Error("That caregiver no longer exists. Refresh the page.");
+      if (!c) throw new Refusal("That caregiver no longer exists. Refresh the page.");
       const reason = assignmentBlockReason(p.rule, c, data.role);
-      if (reason) throw new Error(reason);
+      if (reason) throw new Refusal(reason);
     }
     // A new main caregiver who was the backup stops being the backup.
     await query(
@@ -181,7 +182,7 @@ export const advancePatient = createServerFn({ method: "POST" })
     await requireStaff();
     const p = await loadPatient(data.id);
     const reason = advanceBlockReason(p.rule);
-    if (reason) throw new Error(reason);
+    if (reason) throw new Refusal(reason);
     await query(
       `update patients set journey_step = journey_step + 1, updated_at = now(),
               care_start = case when journey_step = 4 then now() else care_start end
@@ -195,7 +196,7 @@ export const logNurseVisit = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireStaff();
     const p = await loadPatient(data.id);
-    if (!p.care_start) throw new Error("Nurse supervision visits start once care has begun.");
+    if (!p.care_start) throw new Refusal("Nurse supervision visits start once care has begun.");
     await query(`update patients set last_nurse_visit = now(), updated_at = now() where id = $1`, [data.id]);
   });
 
@@ -207,7 +208,7 @@ export const addShiftLog = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const staff = await requireStaff();
     const p = await loadPatient(data.patientId);
-    if (!p.caregiver_id) throw new Error("Only placed patients (with a caregiver) have daily care logs.");
+    if (!p.caregiver_id) throw new Refusal("Only placed patients (with a caregiver) have daily care logs.");
     await query(
       `insert into shift_logs (patient_id, caregiver_id, bp, spo2, meals, meds, mood, notes, recorded_by)
        values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
@@ -267,7 +268,7 @@ export const addFamilyContact = createServerFn({ method: "POST" })
     const staff = await requireStaff();
     await loadPatient(data.patientId);
     const phone = normalizePhone(data.phone);
-    if (!phone) throw new Error("Enter the mobile number with its country code, e.g. +1 408 555 0142 (Indian numbers can skip +91).");
+    if (!phone) throw new Refusal("Enter the mobile number with its country code, e.g. +1 408 555 0142 (Indian numbers can skip +91).");
     await query(
       `insert into family_contacts (patient_id, name, relationship, phone, created_by) values ($1, $2, $3, $4, $5)
        on conflict (patient_id, phone) do update set name = excluded.name, relationship = excluded.relationship, active = true`,

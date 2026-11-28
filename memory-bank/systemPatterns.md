@@ -41,6 +41,11 @@ typecheck `npx tsc --noEmit`.
 | `/caregivers` | `src/routes/caregivers.tsx` |
 | `/shifts` | `src/routes/shifts.tsx` |
 | `/incidents` | `src/routes/incidents.tsx` |
+| `/enquiries` | `src/routes/enquiries.tsx` |
+| `/notifications` | `src/routes/notifications.tsx` |
+| `/staff` (admins only) | `src/routes/staff.tsx` |
+| `/family` (family portal) | `src/routes/family.tsx` |
+| `/privacy` (public) | `src/routes/privacy.tsx` |
 
 ## Data model (`src/lib/store.ts`)
 - Types: `Patient`, `Caregiver`, `ShiftLog`, `Incident`, `Complaint`, `State`.
@@ -67,7 +72,19 @@ typecheck `npx tsc --noEmit`.
 - No secrets in the repo; AI calls via Lovable gateway, `LOVABLE_API_KEY` never in browser code.
 
 ## Security posture (current)
-- No auth, no backend, no server-side data. Console is public and demo-only.
+- Staff console behind real sign-in (password + SMS code, ADR-008/009); all data in Neon (ADR-010).
+- **Refusals vs faults (ADR-013):** throw `Refusal` (`src/lib/errors.ts`) for expected "no"s
+  (not signed in, SOP rule, missing record) — shown to the user, never sent to Sentry. Anything
+  else thrown server-side is a fault and is reported by `src/lib/sentry.ts` (no SDK; envelope via
+  fetch; DSN `VITE_SENTRY_DSN`; messages scrubbed of phones/emails; no request bodies).
+- **Staff logins (`/staff`):** `src/server/staff-admin.ts` (`requireAdmin`), rules in
+  `src/lib/staff-rules.ts` (no self-off/self-demote, ≥1 active admin, password ≥10). Turning off /
+  password reset deletes sessions, trusted devices and challenges. `bun run staff:create` still works.
+- **Enquiry spam limits:** `enquiryDecision` in `src/lib/enquiry.ts` — 3 saved per phone/24 h (only
+  the first alerts staff), 5 per IP/hour, staff alerts capped at 20/hour. IP kept only as SHA-256
+  (`src/server/request.ts`). `query()` strips NUL characters from string params.
+- **Privacy policy:** `/privacy`; business/grievance contact fields in `src/lib/site-config.ts`
+  are `[TO SET]` by the owner (page shows a fallback until filled).
 - Never store real patient data (names, phones, health info) in seed data or the memory bank.
 - **Env convention:** new keys get empty `NAME=` placeholders in `.env.local` (comment on its own
   line above, never trailing); the owner pastes values, then they're copied to Vercel env.

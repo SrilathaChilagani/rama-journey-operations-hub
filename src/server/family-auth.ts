@@ -5,6 +5,7 @@
 // - Access is re-derived on every request from `family_contacts`, so staff removing a contact
 //   cuts access immediately, even mid-session.
 // - Tokens are random, kept in httpOnly cookies, stored only as SHA-256.
+import { Refusal } from "@/lib/errors";
 import { createHash, randomBytes } from "node:crypto";
 import { deleteCookie, getCookie, setCookie } from "@tanstack/react-start/server";
 import { query } from "./db";
@@ -152,14 +153,14 @@ export async function familyLinks(): Promise<FamilyLink[]> {
 /** Throws unless the signed-in family member is linked to this patient and has consented. */
 export async function requireFamilyAccess(patientId: string): Promise<FamilyLink> {
   const link = (await familyLinks()).find((l) => l.patientId === patientId);
-  if (!link) throw new Error("Not signed in");
-  if (!link.consented) throw new Error("Consent required");
+  if (!link) throw new Refusal("Not signed in");
+  if (!link.consented) throw new Refusal("Consent required");
   return link;
 }
 
 export async function recordFamilyConsent(): Promise<void> {
   const phone = await sessionPhone();
-  if (!phone) throw new Error("Not signed in");
+  if (!phone) throw new Refusal("Not signed in");
   await query(`update family_contacts set consent_at = now() where phone = $1 and active and consent_at is null`, [phone]);
 }
 
