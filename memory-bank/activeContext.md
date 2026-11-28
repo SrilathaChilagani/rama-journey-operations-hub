@@ -22,4 +22,5 @@
 ## Next Action
 - When owner fills values: copy to Vercel (`env -u VERCEL_TOKEN vercel env add …`), redeploy,
   live-test WhatsApp/email and a Sentry test event.
-- Later: domain → Vercel; Phase 2 Lovable removal (then consider official Sentry SDK).
+- Domain: ramacares.in attached in Vercel; once Hostinger DNS is live, verify https + www, then set up Resend domain records on Hostinger DNS.
+- Later: Phase 2 Lovable removal (then consider official Sentry SDK).
