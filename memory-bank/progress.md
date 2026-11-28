@@ -109,7 +109,7 @@ Last updated: 2026-11-28 — Claude Code (privacy page, Sentry, Staff logins pag
 2. **Caregiver search + booking** — only if owner asks again; must respect assessment gate.
 3. **Prices and pay** — still `[TO SET]`.
 4. **Contact details** — phone/email/address not final.
-5. **Domain** — ramacares.in added to Vercel (2026-11-28); waiting on Hostinger DNS: `A @ 76.76.21.21`, `CNAME www cname.vercel-dns.com`.
+5. **Domain** — live at https://ramacares.in (2026-11-28). Next: verify ramacares.in in Resend (DNS on Hostinger).
 
 ## 📝 Change Request Log
 > Every change the user asks for, in order. Status: Requested | In progress | Done | Rolled back | Dropped.
@@ -134,4 +134,4 @@ Last updated: 2026-11-28 — Claude Code (privacy page, Sentry, Staff logins pag
 | 2026-11-27 | Phase 2: family portal at /family — guardian phone + SMS code, daily reports, care plan, nurse visits, raise a concern; homepage styling | Done | ADR-011, `db/migrations/004…`, `src/routes/family.tsx` |
 | 2026-11-27 | Notifications: WhatsApp + email — new enquiry & family concern → staff; Red/Amber incident & daily report → family | Done — awaiting owner's Resend key + WhatsApp sandbox setup | ADR-012, `db/migrations/005…`, `src/server/notify.ts` |
 | 2026-11-28 | Privacy policy page, Sentry error alerts, Staff page (add/disable/reset logins), spam limits on enquiry form | Done — awaiting owner's Sentry DSN + privacy contact details | ADR-013, `db/migrations/006…`, `src/routes/privacy.tsx`, `src/routes/staff.tsx`, `src/lib/sentry.ts` |
-| 2026-11-28 | Connect domain ramacares.in (Hostinger) to Vercel | In progress — added to Vercel project (apex + www), `APP_BASE_URL=https://ramacares.in` set locally + Vercel; owner to add DNS at Hostinger | Vercel domains |
+| 2026-11-28 | Connect domain ramacares.in (Hostinger) to Vercel | Done — DNS at Hostinger (A @ 76.76.21.21, CNAME www); HTTPS live; www 308-redirects to ramacares.in; `APP_BASE_URL` set | Vercel domains |
